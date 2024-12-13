@@ -1,0 +1,26 @@
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+@layer components {
+  .h1 {
+    @apply text-3xl;
+  }
+  .h2 {
+    @apply text-2xl;
+  }
+  .h3 {
+    @apply text-xl;
+  }
+  .h4 {
+    @apply text-lg;
+  }
+
+  .centered-dialog {
+    @apply w-full max-w-2xl min-w-[300px] absolute left-1/2 transform -translate-x-1/2 bg-white rounded-lg shadow-lg p-6;
+  }
+
+  .navlink-active {
+    @apply bg-secondary-300 rounded-lg;
+  }
+}
