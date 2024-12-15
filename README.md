@@ -1,8 +1,10 @@
 # README
 
+# ALPHA: This software is not ready for public use yet. Still in development
+
 ## About
 
-This is the official Wails Svelte-TS template.
+Another TODO app for the busy creator who are juggling multiple project. It has progressive gamification techiques to help motivate you to complete your work.
 
 ## Live Development
 
