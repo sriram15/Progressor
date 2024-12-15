@@ -4,8 +4,8 @@ export const progressorTheme: CustomThemeConfig = {
   name: "progressor-theme",
   properties: {
     // =~= Theme Properties =~=
-    "--theme-font-family-base": `"Montserrat", sans-serif`,
-    "--theme-font-family-heading": `'Bebas Neue', sans-serif`,
+    "--theme-font-family-base": `"Amiko", sans-serif`,
+    "--theme-font-family-heading": `'Arima', system-ui`,
     "--theme-font-color-base": "0 0 0",
     "--theme-font-color-dark": "255 255 255",
     "--theme-rounded-base": "2px",
