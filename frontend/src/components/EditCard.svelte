@@ -29,14 +29,19 @@
     const { form, handleChange, handleSubmit } = createForm({
         initialValues: {
             title: "",
+            estimatedMins: 0,
         },
         onSubmit: async (values) => {
             const descriptionData = await descriptionEditorRef.save();
 
+            // TODO: Make this easier. Current parsing to string and back to number to make sure value from input is converted to number
+            const estimatedMinsStr: string = values.estimatedMins.toString();
             const updateCardParam = {
                 title: values.title,
+                estimatedMins: parseInt(estimatedMinsStr),
                 description: JSON.stringify(descriptionData),
             };
+            console.log(updateCardParam);
             await UpdateCard(projectId, selectedCardId, updateCardParam);
             emitEvent(EVENTS.CARD_UPDATED, { id: selectedCardId });
         },
@@ -68,6 +73,7 @@
             const data = await GetCardById(projectId, cardId);
 
             $form.title = data.title;
+            $form.estimatedMins = data.estimatedmins || 0;
             descriptionData =
                 data.description.Valid &&
                 data.description.String &&
@@ -104,9 +110,11 @@
     {:else if cardData.error}
         <b>Error while loading the data - {cardData.error}</b>
     {:else}
-        <div class="flex flex-row items-center mb-4">
-            <h5 class="h5 flex-1">Details</h5>
-            <button class="btn variant-filled-secondary" onclick={handleSubmit}
+        <div
+            class="sticky p-4 top-0 bg-surface-100-800-token flex flex-row items-center"
+        >
+            <h3 class="h3 flex-1">Details</h3>
+            <button class="btn variant-ringed-secondary" onclick={handleSubmit}
                 >Save</button
             >
             <button
@@ -116,8 +124,9 @@
             >
         </div>
 
-        <form class="flex flex-col gap-4">
+        <form class="p-4 flex flex-col gap-4">
             <label class="label" for="title">
+                Title
                 <input
                     class="border-2 p-2 w-full"
                     name="title"
@@ -127,15 +136,28 @@
                 />
             </label>
 
-            <div class="flex-1 border-2 p-2">
-                <Editor
-                    class="bg-white h-full"
-                    key={`description-${selectedCardId}`}
-                    name="description"
-                    initialValue={descriptionData}
-                    bind:this={descriptionEditorRef}
+            <label class="label" for="description">
+                Notes
+                <div class="p-2 bg-white">
+                    <Editor
+                        key={`description-${selectedCardId}`}
+                        name="description"
+                        initialValue={descriptionData}
+                        bind:this={descriptionEditorRef}
+                    />
+                </div>
+            </label>
+
+            <label class="label" for="estimatedMins">
+                Estimate (in Mins)
+                <input
+                    class="border-2 p-2 w-full"
+                    name="estimatedMins"
+                    type="number"
+                    onchange={handleChange}
+                    bind:value={$form.estimatedMins}
                 />
-            </div>
+            </label>
         </form>
     {/if}
 {/if}

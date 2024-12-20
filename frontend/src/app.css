@@ -3,16 +3,20 @@
 @import "tailwindcss/utilities";
 
 @layer components {
-  .h1 {
-    @apply text-3xl;
+  .h1,
+  h1 {
+    @apply text-3xl uppercase;
   }
-  .h2 {
-    @apply text-2xl;
+  .h2,
+  h2 {
+    @apply text-2xl uppercase;
   }
-  .h3 {
-    @apply text-xl;
+  .h3,
+  h3 {
+    @apply text-xl uppercase;
   }
-  .h4 {
+  .h4,
+  h4 {
     @apply text-lg;
   }
 

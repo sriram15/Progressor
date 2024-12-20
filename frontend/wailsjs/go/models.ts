@@ -165,6 +165,7 @@ export namespace service {
 	
 	export class UpdateCardParams {
 	    title: string;
+	    estimatedMins: number;
 	    description: string;
 	
 	    static createFrom(source: any = {}) {
@@ -174,6 +175,7 @@ export namespace service {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.title = source["title"];
+	        this.estimatedMins = source["estimatedMins"];
 	        this.description = source["description"];
 	    }
 	}

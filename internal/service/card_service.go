@@ -29,8 +29,9 @@ const (
 )
 
 type UpdateCardParams struct {
-	Title       string `json:"title"`
-	Description string `json:"description"`
+	Title         string `json:"title"`
+	EstimatedMins int    `json:"estimatedMins"`
+	Description   string `json:"description"`
 }
 
 type CardService interface {
@@ -144,7 +145,7 @@ func (c *cardService) UpdateCard(projectId uint, id uint, updateCardParam Update
 		ID:            card.CardID,
 		Status:        card.Status,
 		Trackedmins:   card.Trackedmins,
-		Estimatedmins: card.Estimatedmins,
+		Estimatedmins: int64(updateCardParam.EstimatedMins),
 		Completedat:   card.Completedat,
 	})
 
@@ -241,8 +242,9 @@ func (c *cardService) StartCard(projectId uint, id uint) error {
 	qtx := c.queries.WithTx(tx)
 
 	err = qtx.UpdateCardActive(c.ctx, database.UpdateCardActiveParams{
-		ID:       int64(id),
-		Isactive: true,
+		ID:          int64(id),
+		Isactive:    true,
+		Trackedmins: card.Trackedmins,
 	})
 	if err != nil {
 		return err

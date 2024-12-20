@@ -17,7 +17,9 @@
             <p>Page content</p>
         {/if}
     </div>
-    <div>
+    <div
+        class="border-2 rounded-sm h-full overflow-y-auto bg-surface-100-800-token"
+    >
         {@render sidebar?.()}
     </div>
     <div

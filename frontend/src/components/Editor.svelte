@@ -36,4 +36,4 @@
     }
 </script>
 
-<div id={`${name}_editor_${key}`}></div>
+<div class="bg-white" id={`${name}_editor_${key}`}></div>

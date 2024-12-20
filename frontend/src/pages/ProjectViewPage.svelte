@@ -57,7 +57,6 @@
 
             if (events.type === EVENTS.CARD_START) {
                 activeCard = events.payload;
-                console.log(activeCard);
             }
 
             if (events.type === EVENTS.CARD_STOP) {
@@ -177,9 +176,7 @@
     {/if}
 
     {#snippet sidebar()}
-        <div class="border-2 p-4 rounded-sm h-full bg-surface-100-800-token">
-            <EditCard />
-        </div>
+        <EditCard />
     {/snippet}
 </FixedSidebarPageLayout>
 
