@@ -163,6 +163,22 @@ export namespace database {
 
 export namespace service {
 	
+	export class GetStatsResult {
+	    weekHrs: number;
+	    monthHrs: number;
+	    yearHrs: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new GetStatsResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.weekHrs = source["weekHrs"];
+	        this.monthHrs = source["monthHrs"];
+	        this.yearHrs = source["yearHrs"];
+	    }
+	}
 	export class UpdateCardParams {
 	    title: string;
 	    estimatedMins: number;

@@ -19,6 +19,7 @@
     import EditCard from "@/components/EditCard.svelte";
     import { StopCard } from "@wailsjs/go/service/cardService";
     import ActiveCard from "@/components/ActiveCard.svelte";
+    import StatsBar from "@/components/StatsBar.svelte";
 
     interface Props {
         projectId: number;
@@ -177,6 +178,7 @@
 
     {#snippet sidebar()}
         <EditCard />
+        <StatsBar />
     {/snippet}
 </FixedSidebarPageLayout>
 

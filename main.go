@@ -34,6 +34,7 @@ func main() {
 	queries := database.New(db)
 	projectService := service.NewProjectService()
 	cardService := service.NewCardService(db, queries, projectService)
+	progressService := service.NewProgressService(queries)
 	settingsService := service.NewSettingService()
 	shortcuts := internal.NewShortcut()
 
@@ -44,8 +45,8 @@ func main() {
 	fileMenu.AddText("Quit", keys.CmdOrCtrl("q"), func(_ *menu.CallbackData) {
 		wailsRuntime.Quit(startupCtx)
 	})
-	fileMenu.AddText("Add card", keys.CmdOrCtrl("c"), func(_ *menu.CallbackData) {
-		wailsRuntime.EventsEmit(startupCtx, "globalMenu:AddCard")
+	fileMenu.AddText("Command Prompt", keys.CmdOrCtrl("k"), func(_ *menu.CallbackData) {
+		wailsRuntime.EventsEmit(startupCtx, "globalMenu:CommandPrompt")
 	})
 
 	if runtime.GOOS == "darwin" {
@@ -84,6 +85,7 @@ func main() {
 		BackgroundColour: &options.RGBA{R: 27, G: 38, B: 54, A: 1},
 		Bind: []interface{}{
 			cardService,
+			progressService,
 			settingsService,
 		},
 	}

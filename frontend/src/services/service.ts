@@ -13,6 +13,8 @@ import {
   StopCard,
 } from "@wailsjs/go/service/cardService";
 
+import { GetStats } from "@wailsjs/go/service/progressService";
+
 export {
   GetAll,
   GetOpenCards,
@@ -23,4 +25,5 @@ export {
   UpdateCardStatus,
   StartCard,
   StopCard,
+  GetStats,
 };

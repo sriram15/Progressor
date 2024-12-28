@@ -1,20 +1,15 @@
 <script lang="ts">
-    import { EventsOff, EventsOn } from "@wailsjs/runtime";
-    import { onDestroy, onMount } from "svelte";
-
-    let { submit } = $props();
+    let { show, submit, onClose } = $props();
 
     let dialog = $state<HTMLDialogElement>();
     let cardTitle = $state("");
 
-    onMount(() => {
-        EventsOn("globalMenu:AddCard", () => {
+    $effect(() => {
+        if (show) {
             showDialog();
-        });
-    });
-
-    onDestroy(() => {
-        EventsOff("globalMenu:AddCard");
+        } else {
+            closeDialog();
+        }
     });
 
     const showDialog = () => {
@@ -28,6 +23,7 @@
     const closeDialog = () => {
         dialog.close();
         resetDialogContent();
+        onClose();
     };
 
     const handleSubmit = (event: any) => {
@@ -36,10 +32,6 @@
         closeDialog(); // Close the dialog after submission
     };
 </script>
-
-<button class="btn btn-sm variant-filled-primary" onclick={showDialog}>
-    Add Card (Ctrl + C)
-</button>
 
 <dialog bind:this={dialog} class="centered-dialog">
     <form method="dialog" onsubmit={handleSubmit} class="flex flex-col">
