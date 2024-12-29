@@ -177,8 +177,11 @@
     {/if}
 
     {#snippet sidebar()}
-        <EditCard />
-        <StatsBar />
+        {#if selectedCardId}
+            <EditCard />
+        {:else}
+            <StatsBar />
+        {/if}
     {/snippet}
 </FixedSidebarPageLayout>
 

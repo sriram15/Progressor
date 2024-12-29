@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"math"
 
 	"github.com/sriram15/progressor-todo-app/internal/database"
 )
@@ -31,23 +32,29 @@ func NewProgressService(queries *database.Queries) ProgressService {
 
 func (p *progressService) GetStats() (GetStatsResult, error) {
 
-	weekHrs, err := p.queries.AggregateWeekHours(p.ctx, int64(1))
-	if err != nil || !weekHrs.Valid {
+	weekMins, err := p.queries.AggregateWeekHours(p.ctx, int64(1))
+	if err != nil || !weekMins.Valid {
 		return GetStatsResult{}, err
 	}
-	monthHrs, err := p.queries.AggregateMonthHours(p.ctx, int64(1))
-	if err != nil || !monthHrs.Valid {
+	monthMins, err := p.queries.AggregateMonthHours(p.ctx, int64(1))
+	if err != nil || !monthMins.Valid {
 		return GetStatsResult{}, err
 	}
 
-	yearHrs, err := p.queries.AggregateYearHours(p.ctx, int64(1))
-	if err != nil || !yearHrs.Valid {
+	yearMins, err := p.queries.AggregateYearHours(p.ctx, int64(1))
+	if err != nil || !yearMins.Valid {
 		return GetStatsResult{}, err
 	}
+
+	// Convert to hours from mins
+
+	weekHours := math.Ceil(weekMins.Float64 / 60.0)
+	monthHours := math.Ceil(monthMins.Float64 / 60.0)
+	yearHours := math.Ceil(yearMins.Float64 / 60.0)
 
 	return GetStatsResult{
-		WeekHrs:  weekHrs.Float64,
-		MonthHrs: monthHrs.Float64,
-		YearHrs:  yearHrs.Float64,
+		WeekHrs:  weekHours,
+		MonthHrs: monthHours,
+		YearHrs:  yearHours,
 	}, nil
 }
