@@ -14,6 +14,10 @@ export function DeleteCard(arg1, arg2) {
   return window['go']['service']['cardService']['DeleteCard'](arg1, arg2);
 }
 
+export function GetActiveTimeEntry(arg1, arg2) {
+  return window['go']['service']['cardService']['GetActiveTimeEntry'](arg1, arg2);
+}
+
 export function GetAll(arg1) {
   return window['go']['service']['cardService']['GetAll'](arg1);
 }

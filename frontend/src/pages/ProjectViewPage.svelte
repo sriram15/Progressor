@@ -147,12 +147,11 @@
             ? cards.filter((card) => card.status == 1)
             : []}
 
-        {#if activeCard != null}
-            <!-- <ActiveCard {activeCard} /> -->
-        {/if}
-
         {#if openCards.length > 0}
             <div class="grid grid-cols-1 gap-1 p-4 pl-8 pr-8">
+                {#if activeCard != null}
+                    <ActiveCard {projectId} {activeCard} />
+                {/if}
                 <h3 class="h3">Cards</h3>
                 {#each openCards as card (card.card_id)}
                     {@render displayCard(card, card.status === 1)}

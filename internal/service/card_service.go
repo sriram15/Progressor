@@ -38,6 +38,7 @@ type CardService interface {
 	GetAll(projectId uint) ([]database.ListCardsRow, error)
 	GetOpenCards(projectId uint) ([]database.ListOpenOrCTCardsRow, error)
 	GetCardById(projectId uint, id uint) (database.GetCardRow, error)
+	GetActiveTimeEntry(projectId uint, id uint) (database.TimeEntry, error)
 	DeleteCard(projectId uint, id uint) error
 	UpdateCard(projectId uint, id uint, updateCardParam UpdateCardParams) error
 	UpdateCardStatus(projectId uint, id uint, status CardStatus) error
@@ -99,6 +100,21 @@ func (c *cardService) GetCardById(projectId uint, id uint) (database.GetCardRow,
 	return card, nil
 }
 
+func (c *cardService) GetActiveTimeEntry(projectId uint, id uint) (database.TimeEntry, error) {
+
+	_, err := c.projectService.IsValidProject(projectId)
+	if err != nil {
+		return database.TimeEntry{}, err
+	}
+
+	timeEntry, err := c.queries.GetActiveTimeEntry(c.ctx, int64(id))
+	if err != nil {
+		return database.TimeEntry{}, err
+	}
+
+	return timeEntry, nil
+
+}
 func (c *cardService) DeleteCard(projectId uint, id uint) error {
 
 	_, err := c.projectService.IsValidProject(projectId)
