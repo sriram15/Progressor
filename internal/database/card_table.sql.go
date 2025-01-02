@@ -179,8 +179,13 @@ func (q *Queries) GetCard(ctx context.Context, arg GetCardParams) (GetCardRow, e
 }
 
 const listCards = `-- name: ListCards :many
-SELECT id, title, description, createdat, updatedat, status, completedat, estimatedmins, trackedmins, isactive, projectid, id AS card_id FROM Cards WHERE projectId = ?
+SELECT id, title, description, createdat, updatedat, status, completedat, estimatedmins, trackedmins, isactive, projectid, id AS card_id FROM Cards WHERE projectId = ? AND status = ?
 `
+
+type ListCardsParams struct {
+	Projectid int64 `json:"projectid"`
+	Status    int64 `json:"status"`
+}
 
 type ListCardsRow struct {
 	ID            int64          `json:"id"`
@@ -197,8 +202,8 @@ type ListCardsRow struct {
 	CardID        int64          `json:"card_id"`
 }
 
-func (q *Queries) ListCards(ctx context.Context, projectid int64) ([]ListCardsRow, error) {
-	rows, err := q.db.QueryContext(ctx, listCards, projectid)
+func (q *Queries) ListCards(ctx context.Context, arg ListCardsParams) ([]ListCardsRow, error) {
+	rows, err := q.db.QueryContext(ctx, listCards, arg.Projectid, arg.Status)
 	if err != nil {
 		return nil, err
 	}

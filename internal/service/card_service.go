@@ -35,7 +35,7 @@ type UpdateCardParams struct {
 }
 
 type CardService interface {
-	GetAll(projectId uint) ([]database.ListCardsRow, error)
+	GetAll(projectId uint, status CardStatus) ([]database.ListCardsRow, error)
 	GetOpenCards(projectId uint) ([]database.ListOpenOrCTCardsRow, error)
 	GetCardById(projectId uint, id uint) (database.GetCardRow, error)
 	GetActiveTimeEntry(projectId uint, id uint) (database.TimeEntry, error)
@@ -64,13 +64,19 @@ func NewCardService(db *sql.DB, queries *database.Queries, projectService Projec
 	}
 }
 
-func (c *cardService) GetAll(projectId uint) ([]database.ListCardsRow, error) {
+func (c *cardService) GetAll(projectId uint, status CardStatus) ([]database.ListCardsRow, error) {
 
 	_, err := c.projectService.IsValidProject(projectId)
 	if err != nil {
 		return []database.ListCardsRow{}, err
 	}
-	cards, err := c.queries.ListCards(c.ctx, int64(projectId))
+
+	// TODO: Add validations
+	// if status != Todo || status != Done {
+	// 	return []database.ListCardsRow{}, ErrInvalidStatus
+	// }
+
+	cards, err := c.queries.ListCards(c.ctx, database.ListCardsParams{Projectid: int64(projectId), Status: int64(status)})
 	return cards, err
 }
 func (c *cardService) GetOpenCards(projectId uint) ([]database.ListOpenOrCTCardsRow, error) {

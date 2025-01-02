@@ -33,24 +33,24 @@ func NewProgressService(queries *database.Queries) ProgressService {
 func (p *progressService) GetStats() (GetStatsResult, error) {
 
 	weekMins, err := p.queries.AggregateWeekHours(p.ctx, int64(1))
-	if err != nil || !weekMins.Valid {
+	if err != nil {
 		return GetStatsResult{}, err
 	}
 	monthMins, err := p.queries.AggregateMonthHours(p.ctx, int64(1))
-	if err != nil || !monthMins.Valid {
+	if err != nil {
 		return GetStatsResult{}, err
 	}
 
 	yearMins, err := p.queries.AggregateYearHours(p.ctx, int64(1))
-	if err != nil || !yearMins.Valid {
+	if err != nil {
 		return GetStatsResult{}, err
 	}
 
 	// Convert to hours from mins
 
-	weekHours := math.Ceil(weekMins.Float64 / 60.0)
-	monthHours := math.Ceil(monthMins.Float64 / 60.0)
-	yearHours := math.Ceil(yearMins.Float64 / 60.0)
+	weekHours := math.Ceil(weekMins / 60.0)
+	monthHours := math.Ceil(monthMins / 60.0)
+	yearHours := math.Ceil(yearMins / 60.0)
 
 	return GetStatsResult{
 		WeekHrs:  weekHours,

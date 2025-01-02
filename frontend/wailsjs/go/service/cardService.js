@@ -18,8 +18,8 @@ export function GetActiveTimeEntry(arg1, arg2) {
   return window['go']['service']['cardService']['GetActiveTimeEntry'](arg1, arg2);
 }
 
-export function GetAll(arg1) {
-  return window['go']['service']['cardService']['GetAll'](arg1);
+export function GetAll(arg1, arg2) {
+  return window['go']['service']['cardService']['GetAll'](arg1, arg2);
 }
 
 export function GetCardById(arg1, arg2) {

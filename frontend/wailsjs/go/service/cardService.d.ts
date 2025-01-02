@@ -11,7 +11,7 @@ export function DeleteCard(arg1:number,arg2:number):Promise<void>;
 
 export function GetActiveTimeEntry(arg1:number,arg2:number):Promise<database.TimeEntry>;
 
-export function GetAll(arg1:number):Promise<Array<database.ListCardsRow>>;
+export function GetAll(arg1:number,arg2:service.CardStatus):Promise<Array<database.ListCardsRow>>;
 
 export function GetCardById(arg1:number,arg2:number):Promise<database.GetCardRow>;
 

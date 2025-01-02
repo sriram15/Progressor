@@ -7,11 +7,10 @@ package database
 
 import (
 	"context"
-	"database/sql"
 )
 
 const aggregateMonthHours = `-- name: AggregateMonthHours :one
-SELECT SUM(te.duration) AS totalTrackedMinsCurrentMonth
+SELECT CAST(IFNULL(SUM(te.duration), 0) AS FLOAT) AS totalTrackedMinsCurrentMonth
 FROM TimeEntries te
 JOIN Cards c ON te.cardId = c.id
 JOIN Projects p ON c.projectId = p.id
@@ -19,15 +18,15 @@ WHERE p.id = ?
 AND strftime('%Y-%m', te.startTime) = strftime('%Y-%m', 'now')
 `
 
-func (q *Queries) AggregateMonthHours(ctx context.Context, id int64) (sql.NullFloat64, error) {
+func (q *Queries) AggregateMonthHours(ctx context.Context, id int64) (float64, error) {
 	row := q.db.QueryRowContext(ctx, aggregateMonthHours, id)
-	var totaltrackedminscurrentmonth sql.NullFloat64
+	var totaltrackedminscurrentmonth float64
 	err := row.Scan(&totaltrackedminscurrentmonth)
 	return totaltrackedminscurrentmonth, err
 }
 
 const aggregateWeekHours = `-- name: AggregateWeekHours :one
-SELECT SUM(te.duration) AS totalTrackedMinsCurrentWeek
+SELECT CAST(IFNULL(SUM(te.duration), 0) AS FLOAT) AS totalTrackedMinsCurrentWeek
 FROM TimeEntries te
 JOIN Cards c ON te.cardId = c.id
 JOIN Projects p ON c.projectId = p.id
@@ -35,15 +34,15 @@ WHERE p.id = ?
 AND strftime('%Y-%W', te.startTime) = strftime('%Y-%W', 'now')
 `
 
-func (q *Queries) AggregateWeekHours(ctx context.Context, id int64) (sql.NullFloat64, error) {
+func (q *Queries) AggregateWeekHours(ctx context.Context, id int64) (float64, error) {
 	row := q.db.QueryRowContext(ctx, aggregateWeekHours, id)
-	var totaltrackedminscurrentweek sql.NullFloat64
+	var totaltrackedminscurrentweek float64
 	err := row.Scan(&totaltrackedminscurrentweek)
 	return totaltrackedminscurrentweek, err
 }
 
 const aggregateYearHours = `-- name: AggregateYearHours :one
-SELECT SUM(te.duration) AS totalTrackedMinsCurrentYear
+SELECT CAST(IFNULL(SUM(te.duration), 0) AS FLOAT) AS totalTrackedMinsCurrentYear
 FROM TimeEntries te
 JOIN Cards c ON te.cardId = c.id
 JOIN Projects p ON c.projectId = p.id
@@ -51,9 +50,9 @@ WHERE p.id = ?
 AND strftime('%Y', te.startTime) = strftime('%Y', 'now')
 `
 
-func (q *Queries) AggregateYearHours(ctx context.Context, id int64) (sql.NullFloat64, error) {
+func (q *Queries) AggregateYearHours(ctx context.Context, id int64) (float64, error) {
 	row := q.db.QueryRowContext(ctx, aggregateYearHours, id)
-	var totaltrackedminscurrentyear sql.NullFloat64
+	var totaltrackedminscurrentyear float64
 	err := row.Scan(&totaltrackedminscurrentyear)
 	return totaltrackedminscurrentyear, err
 }

@@ -21,7 +21,7 @@ WHERE
     c.id = ? AND c.projectId = ?;
 
 -- name: ListCards :many
-SELECT *, id AS card_id FROM Cards WHERE projectId = ?;
+SELECT *, id AS card_id FROM Cards WHERE projectId = ? AND status = ?;
 
 -- name: ListOpenOrCTCards :many
 SELECT *, id as card_id FROM Cards WHERE projectId = ? AND (status != 1 OR (status=1 AND completedAt > datetime('now', '-24 hour')));

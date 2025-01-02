@@ -6,7 +6,6 @@
         faTrash,
     } from "@fortawesome/free-solid-svg-icons";
     import {
-        GetOpenCards,
         DeleteCard,
         UpdateCardStatus,
         StartCard,
@@ -17,9 +16,11 @@
     import FixedSidebarPageLayout from "./layouts/FixedSidebarPageLayout.svelte";
     import type { database } from "@wailsjs/go/models";
     import EditCard from "@/components/EditCard.svelte";
-    import { StopCard } from "@wailsjs/go/service/cardService";
+    import { GetAll, StopCard } from "@wailsjs/go/service/cardService";
     import ActiveCard from "@/components/ActiveCard.svelte";
     import StatsBar from "@/components/StatsBar.svelte";
+    import ProjectViewFilter from "@/components/ProjectViewFilter.svelte";
+    import { fade, fly } from "svelte/transition";
 
     interface Props {
         projectId: number;
@@ -27,15 +28,20 @@
 
     let { projectId }: Props = $props();
 
+    const initialStatus: number = 0;
+
     let selectedCardId: number | null = $state(null);
-    let activeCard: database.ListOpenOrCTCardsRow | null = $state(null);
+    let activeCard: database.ListCardsRow | null = $state(null);
     let cards = $state([]);
     let isLoading = $state(false);
     let error = $state("");
+    let cardFilters = $state({
+        status: { label: "Status", value: initialStatus },
+    });
 
     const loadCards = async (projectId: number) => {
         try {
-            const data = await GetOpenCards(projectId);
+            const data = await GetAll(projectId, cardFilters.status.value);
             cards = data;
             activeCard = data.find((row) => row.isactive) ?? null;
         } catch (err) {
@@ -132,6 +138,11 @@
             console.error(err);
         }
     };
+
+    const onFilterChange = async (newFilter: any) => {
+        cardFilters = newFilter;
+        loadCards(projectId);
+    };
 </script>
 
 <FixedSidebarPageLayout>
@@ -139,66 +150,53 @@
         <p>...waiting</p>
     {:else if error.length > 0}
         <p style="color: red">{error}</p>
+    {:else if cards.length > 0}
+        <div class="grid grid-cols-1 gap-1 p-4 pl-8 pr-8">
+            {#if activeCard != null}
+                <ActiveCard {projectId} {activeCard} />
+            {/if}
+
+            <ProjectViewFilter
+                filterStatus={cardFilters}
+                setFilterStatus={onFilterChange}
+            />
+            <h3 class="h3">Cards</h3>
+            {#each cards as card (card.card_id)}
+                {@render displayCard(card)}
+            {/each}
+        </div>
     {:else}
-        {@const openCards = cards
-            ? cards.filter((card) => card.status == 0)
-            : []}
-        {@const completedToday = cards
-            ? cards.filter((card) => card.status == 1)
-            : []}
-
-        {#if openCards.length > 0}
-            <div class="grid grid-cols-1 gap-1 p-4 pl-8 pr-8">
-                {#if activeCard != null}
-                    <ActiveCard {projectId} {activeCard} />
-                {/if}
-                <h3 class="h3">Cards</h3>
-                {#each openCards as card (card.card_id)}
-                    {@render displayCard(card, card.status === 1)}
-                {/each}
-            </div>
-        {:else}
-            <p class="text-surface-400">
-                Start creating new cards to add to todo
-            </p>
-        {/if}
-
-        {#if completedToday.length > 0}
-            <hr />
-
-            <div class="grid grid-cols-1 gap-1 p-4 pl-8 pr-8">
-                <h4 class="h4">Completed Recently</h4>
-                {#each completedToday as card (card.card_id)}
-                    {@render displayCard(card, card.status === 1)}
-                {/each}
-            </div>
-        {/if}
+        <p class="text-surface-400">Start creating new cards to add to todo</p>
     {/if}
 
     {#snippet sidebar()}
         {#if selectedCardId}
-            <EditCard />
+            <div in:fly={{ y: -100 }} out:fly={{ y: 200 }}>
+                <EditCard />
+            </div>
         {:else}
-            <StatsBar />
+            <div in:fly={{ y: -100 }} out:fly={{ y: 200 }}>
+                <StatsBar />
+            </div>
         {/if}
     {/snippet}
 </FixedSidebarPageLayout>
 
-{#snippet displayCard(
-    card: database.ListOpenOrCTCardsRow,
-    isCompleted: boolean = false,
-)}
+{#snippet displayCard(card: database.ListCardsRow)}
+    {@const isCompleted = card.status === 1}
     <div
         class={`rounded p-2 flex items-center group border-2 ${card.id === selectedCardId ? "border-primary-500" : ""} ${card.isactive ? "border-secondary-500" : ""}`}
         onclick={() => onCardSelect(card.card_id)}
         role="button"
         tabindex="0"
         onkeyup={(event) => event.key === "Enter" && onCardSelect(card.card_id)}
+        out:fly={{ x: 50 }}
+        in:fly={{ x: -50 }}
     >
         <input
             type="checkbox"
             id="status-checkbox-{card.card_id}"
-            class="mr-2"
+            class="mr-2 w-4 h-4 accent-secondary-500"
             checked={isCompleted}
             onchange={() => onStatusChange(card)}
         />

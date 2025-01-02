@@ -3,24 +3,26 @@
     import { GetStats } from "../services/service";
 
     let data = $state(null);
-    let loading = $state(false);
+    let loading = $state(true);
     let error = $state("");
 
     onMount(async () => {
         try {
-            loading = true;
             data = await GetStats();
+            console.log(data);
         } catch (ex) {
             error = ex;
+            console.log(ex);
         } finally {
+            console.log("finally");
             loading = false;
         }
     });
 </script>
 
-{#if loading || !data}
+{#if loading}
     <p>Loading...</p>
-{:else if error != ""}
+{:else if error.length > 0}
     <p>Error: {error}</p>
 {:else}
     <div class="flex flex-col p-4">

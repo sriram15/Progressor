@@ -7,7 +7,7 @@
 
     type ActiveCardProps = {
         projectId: number;
-        activeCard: database.ListOpenOrCTCardsRow;
+        activeCard: database.ListCardsRow;
     };
 
     let { projectId, activeCard }: ActiveCardProps = $props();
