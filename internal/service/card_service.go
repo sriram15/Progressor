@@ -36,7 +36,6 @@ type UpdateCardParams struct {
 
 type CardService interface {
 	GetAll(projectId uint, status CardStatus) ([]database.ListCardsRow, error)
-	GetOpenCards(projectId uint) ([]database.ListOpenOrCTCardsRow, error)
 	GetCardById(projectId uint, id uint) (database.GetCardRow, error)
 	GetActiveTimeEntry(projectId uint, id uint) (database.TimeEntry, error)
 	DeleteCard(projectId uint, id uint) error
@@ -77,16 +76,6 @@ func (c *cardService) GetAll(projectId uint, status CardStatus) ([]database.List
 	// }
 
 	cards, err := c.queries.ListCards(c.ctx, database.ListCardsParams{Projectid: int64(projectId), Status: int64(status)})
-	return cards, err
-}
-func (c *cardService) GetOpenCards(projectId uint) ([]database.ListOpenOrCTCardsRow, error) {
-
-	_, err := c.projectService.IsValidProject(projectId)
-	if err != nil {
-		return []database.ListOpenOrCTCardsRow{}, err
-	}
-
-	cards, err := c.queries.ListOpenOrCTCards(c.ctx, int64(projectId))
 	return cards, err
 }
 

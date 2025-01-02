@@ -238,61 +238,6 @@ func (q *Queries) ListCards(ctx context.Context, arg ListCardsParams) ([]ListCar
 	return items, nil
 }
 
-const listOpenOrCTCards = `-- name: ListOpenOrCTCards :many
-SELECT id, title, description, createdat, updatedat, status, completedat, estimatedmins, trackedmins, isactive, projectid, id as card_id FROM Cards WHERE projectId = ? AND (status != 1 OR (status=1 AND completedAt > datetime('now', '-24 hour')))
-`
-
-type ListOpenOrCTCardsRow struct {
-	ID            int64          `json:"id"`
-	Title         string         `json:"title"`
-	Description   sql.NullString `json:"description"`
-	Createdat     sql.NullTime   `json:"createdat"`
-	Updatedat     sql.NullTime   `json:"updatedat"`
-	Status        int64          `json:"status"`
-	Completedat   sql.NullTime   `json:"completedat"`
-	Estimatedmins int64          `json:"estimatedmins"`
-	Trackedmins   int64          `json:"trackedmins"`
-	Isactive      bool           `json:"isactive"`
-	Projectid     int64          `json:"projectid"`
-	CardID        int64          `json:"card_id"`
-}
-
-func (q *Queries) ListOpenOrCTCards(ctx context.Context, projectid int64) ([]ListOpenOrCTCardsRow, error) {
-	rows, err := q.db.QueryContext(ctx, listOpenOrCTCards, projectid)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []ListOpenOrCTCardsRow
-	for rows.Next() {
-		var i ListOpenOrCTCardsRow
-		if err := rows.Scan(
-			&i.ID,
-			&i.Title,
-			&i.Description,
-			&i.Createdat,
-			&i.Updatedat,
-			&i.Status,
-			&i.Completedat,
-			&i.Estimatedmins,
-			&i.Trackedmins,
-			&i.Isactive,
-			&i.Projectid,
-			&i.CardID,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const updateActiveTimeEntry = `-- name: UpdateActiveTimeEntry :exec
 UPDATE TimeEntries SET endTime = ?, duration = ? WHERE id = ?
 `

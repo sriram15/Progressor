@@ -23,9 +23,6 @@ WHERE
 -- name: ListCards :many
 SELECT *, id AS card_id FROM Cards WHERE projectId = ? AND status = ?;
 
--- name: ListOpenOrCTCards :many
-SELECT *, id as card_id FROM Cards WHERE projectId = ? AND (status != 1 OR (status=1 AND completedAt > datetime('now', '-24 hour')));
-
 -- name: CreateCard :exec
 INSERT INTO Cards (title, description, status, projectId, estimatedMins) VALUES (?, ?, ?, ?, ?);
 

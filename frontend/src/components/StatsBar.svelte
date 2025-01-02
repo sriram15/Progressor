@@ -9,12 +9,9 @@
     onMount(async () => {
         try {
             data = await GetStats();
-            console.log(data);
         } catch (ex) {
             error = ex;
-            console.log(ex);
         } finally {
-            console.log("finally");
             loading = false;
         }
     });

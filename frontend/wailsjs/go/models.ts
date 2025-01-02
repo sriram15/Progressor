@@ -106,58 +106,6 @@ export namespace database {
 		    return a;
 		}
 	}
-	export class ListOpenOrCTCardsRow {
-	    id: number;
-	    title: string;
-	    description: sql.NullString;
-	    createdat: sql.NullTime;
-	    updatedat: sql.NullTime;
-	    status: number;
-	    completedat: sql.NullTime;
-	    estimatedmins: number;
-	    trackedmins: number;
-	    isactive: boolean;
-	    projectid: number;
-	    card_id: number;
-	
-	    static createFrom(source: any = {}) {
-	        return new ListOpenOrCTCardsRow(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.id = source["id"];
-	        this.title = source["title"];
-	        this.description = this.convertValues(source["description"], sql.NullString);
-	        this.createdat = this.convertValues(source["createdat"], sql.NullTime);
-	        this.updatedat = this.convertValues(source["updatedat"], sql.NullTime);
-	        this.status = source["status"];
-	        this.completedat = this.convertValues(source["completedat"], sql.NullTime);
-	        this.estimatedmins = source["estimatedmins"];
-	        this.trackedmins = source["trackedmins"];
-	        this.isactive = source["isactive"];
-	        this.projectid = source["projectid"];
-	        this.card_id = source["card_id"];
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
 	export class TimeEntry {
 	    id: number;
 	    cardid: number;

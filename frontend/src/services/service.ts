@@ -3,7 +3,6 @@
 // Right now, we are just going to export the same as wails App
 import {
   GetAll,
-  GetOpenCards,
   GetCardById,
   AddCard,
   DeleteCard,
@@ -18,7 +17,6 @@ import { GetStats } from "@wailsjs/go/service/progressService";
 
 export {
   GetAll,
-  GetOpenCards,
   GetCardById,
   AddCard,
   DeleteCard,

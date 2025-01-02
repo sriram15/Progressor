@@ -26,10 +26,6 @@ export function GetCardById(arg1, arg2) {
   return window['go']['service']['cardService']['GetCardById'](arg1, arg2);
 }
 
-export function GetOpenCards(arg1) {
-  return window['go']['service']['cardService']['GetOpenCards'](arg1);
-}
-
 export function StartCard(arg1, arg2) {
   return window['go']['service']['cardService']['StartCard'](arg1, arg2);
 }

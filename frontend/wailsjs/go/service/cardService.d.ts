@@ -15,8 +15,6 @@ export function GetAll(arg1:number,arg2:service.CardStatus):Promise<Array<databa
 
 export function GetCardById(arg1:number,arg2:number):Promise<database.GetCardRow>;
 
-export function GetOpenCards(arg1:number):Promise<Array<database.ListOpenOrCTCardsRow>>;
-
 export function StartCard(arg1:number,arg2:number):Promise<void>;
 
 export function StopCard(arg1:number,arg2:number):Promise<void>;
