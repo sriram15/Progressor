@@ -38,8 +38,7 @@ jobs:
         run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
       - name: Build Wails app
-        run: |
-          wails build --platform ${{ matrix.platform.build_platform }} -o build/${{ matrix.platform.name }}-app
+        run: make build
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
