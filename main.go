@@ -20,6 +20,9 @@ import (
 //go:embed all:frontend/dist
 var assets embed.FS
 
+//go:embed internal/database/migrations/*
+var migrations embed.FS
+
 func main() {
 
 	var startupCtx context.Context
