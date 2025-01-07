@@ -13,13 +13,13 @@ jobs:
       fail-fast: false
       matrix:
         build:
-          - name: 'App'
+          - name: 'Progressor-Linux'
             platform:  'linux/amd64'
             os: 'ubuntu-latest'
-          - name: 'App'
+          - name: 'Progressor-Windows'
             platform:  'windows/amd64'
             os: 'windows-latest'
-          - name: 'App'
+          - name: 'Progressor-MacOs'
             platform:  'darwin/universal'
             os: 'macos-latest'
     runs-on: ${{ matrix.build.os }}
@@ -55,5 +55,5 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: Wails-${{ matrix.platform.name }}-build
+          name: Wails-${{ matrix.build.name }}-build
           path: build/bin/*
