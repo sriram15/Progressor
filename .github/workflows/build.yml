@@ -38,7 +38,7 @@ jobs:
         run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
       - name: Build Wails app
-        run: make build
+        run: make package
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
