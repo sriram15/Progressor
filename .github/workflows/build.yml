@@ -52,15 +52,8 @@ jobs:
       - name: Build Wails app
         run: make package
 
-      - name: Print build dir
-        run: |
-          cd build
-          ls -la
-          cd bin
-          ls -la
-
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
         with:
           name: Wails-${{ matrix.platform.name }}-build
-          path: build/${{ matrix.platform.name }}-app/*
+          path: build/bin/*
