@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"embed"
+	"fmt"
 	"log"
 	"runtime"
 
@@ -20,12 +21,21 @@ import (
 //go:embed all:frontend/dist
 var assets embed.FS
 
-//go:embed internal/database/migrations/*
+//go:embed all:internal/database/migrations
 var migrations embed.FS
 
 func main() {
 
 	var startupCtx context.Context
+
+	entries, err := migrations.ReadDir("internal/database/migrations")
+	if err != nil {
+		log.Fatalf("Failed to read migrations directory: %v", err)
+	}
+
+	for _, entry := range entries {
+		fmt.Println(entry.Name())
+	}
 
 	db, err := internal.OpenDB()
 	if err != nil {
@@ -39,7 +49,7 @@ func main() {
 	cardService := service.NewCardService(db, queries, projectService)
 	progressService := service.NewProgressService(queries)
 	settingsService := service.NewSettingService()
-	shortcuts := internal.NewShortcut()
+	// shortcuts := internal.NewShortcut()
 
 	// Create menu
 	appMenu := menu.NewMenu()
@@ -58,16 +68,15 @@ func main() {
 
 	// Create application with options
 	wailsApp := &options.App{
-		Title:  "Progressor",
-		Width:  1024,
-		Height: 768,
+		Title:      "Progressor",
+		Fullscreen: true,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},
 		// StartHidden:      true,
 		OnStartup: func(ctx context.Context) {
 			startupCtx = ctx
-			shortcuts.Startup(ctx)
+			// shortcuts.Startup(ctx)
 		},
 		OnBeforeClose: func(ctx context.Context) (prevent bool) {
 			err := cardService.Cleanup()
