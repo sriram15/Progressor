@@ -22,3 +22,15 @@ JOIN Projects p ON c.projectId = p.id
 WHERE p.id = ?
 AND strftime('%Y', te.startTime) = strftime('%Y', 'now');
 
+-- name: GetDailyTotalMinutes :many
+SELECT 
+    DATE(startTime) AS date,
+    SUM(duration) AS total_minutes
+FROM 
+    TimeEntries
+WHERE 
+    startTime >= DATE('now', '-1 year')
+GROUP BY 
+    DATE(startTime)
+ORDER BY 
+    DATE(startTime);

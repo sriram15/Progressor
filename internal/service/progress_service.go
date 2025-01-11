@@ -15,6 +15,7 @@ type GetStatsResult struct {
 
 type ProgressService interface {
 	GetStats() (GetStatsResult, error)
+	GetDailyTotalMinutes() ([]database.GetDailyTotalMinutesRow, error)
 }
 
 type progressService struct {
@@ -57,4 +58,8 @@ func (p *progressService) GetStats() (GetStatsResult, error) {
 		MonthHrs: monthHours,
 		YearHrs:  yearHours,
 	}, nil
+}
+
+func (p *progressService) GetDailyTotalMinutes() ([]database.GetDailyTotalMinutesRow, error) {
+	return p.queries.GetDailyTotalMinutes(p.ctx)
 }

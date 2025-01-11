@@ -7,6 +7,7 @@ package database
 
 import (
 	"context"
+	"database/sql"
 )
 
 const aggregateMonthHours = `-- name: AggregateMonthHours :one
@@ -55,4 +56,46 @@ func (q *Queries) AggregateYearHours(ctx context.Context, id int64) (float64, er
 	var totaltrackedminscurrentyear float64
 	err := row.Scan(&totaltrackedminscurrentyear)
 	return totaltrackedminscurrentyear, err
+}
+
+const getDailyTotalMinutes = `-- name: GetDailyTotalMinutes :many
+SELECT 
+    DATE(startTime) AS date,
+    SUM(duration) AS total_minutes
+FROM 
+    TimeEntries
+WHERE 
+    startTime >= DATE('now', '-1 year')
+GROUP BY 
+    DATE(startTime)
+ORDER BY 
+    DATE(startTime)
+`
+
+type GetDailyTotalMinutesRow struct {
+	Date         interface{}     `json:"date"`
+	TotalMinutes sql.NullFloat64 `json:"total_minutes"`
+}
+
+func (q *Queries) GetDailyTotalMinutes(ctx context.Context) ([]GetDailyTotalMinutesRow, error) {
+	rows, err := q.db.QueryContext(ctx, getDailyTotalMinutes)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetDailyTotalMinutesRow
+	for rows.Next() {
+		var i GetDailyTotalMinutesRow
+		if err := rows.Scan(&i.Date, &i.TotalMinutes); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

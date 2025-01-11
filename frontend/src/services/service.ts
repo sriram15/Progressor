@@ -13,7 +13,10 @@ import {
   GetActiveTimeEntry,
 } from "@wailsjs/go/service/cardService";
 
-import { GetStats } from "@wailsjs/go/service/progressService";
+import {
+  GetStats,
+  GetDailyTotalMinutes,
+} from "@wailsjs/go/service/progressService";
 
 export {
   GetAll,
@@ -24,6 +27,8 @@ export {
   UpdateCardStatus,
   StartCard,
   StopCard,
-  GetStats,
   GetActiveTimeEntry,
+  /// progressService
+  GetStats,
+  GetDailyTotalMinutes,
 };
