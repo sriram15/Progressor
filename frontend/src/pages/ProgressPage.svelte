@@ -6,8 +6,8 @@
         endOfMonth,
         startOfMonth,
     } from "date-fns";
-    import * as d3 from "d3";
     import { onMount } from "svelte";
+    import { fade } from "svelte/transition";
 
     let { loading, data, error } = $state({
         loading: true,
@@ -23,26 +23,12 @@
         end: endOfMonth(new Date(year, month)),
     });
 
-    const yTicks = [0, 30, 60, 90, 120];
-    const padding = { top: 20, right: 15, bottom: 20, left: 25 };
+    const verticalCount = 7;
+    const rectSize = 50;
+    const rectPadding = 15;
 
-    let width = $state(300);
-    let height = 300;
-
-    let xScale = $derived(
-        d3
-            .scaleLinear()
-            .domain([0, data.length])
-            .range([padding.left, width - padding.right]),
-    );
-
-    let yScale = d3
-        .scaleLinear()
-        .domain([0, Math.max.apply(null, yTicks)])
-        .range([height - padding.bottom, padding.top]);
-
-    let innerWidth = $derived(width - (padding.left + padding.right));
-    let barWidth = $derived(innerWidth / data.length);
+    let width = $state(500);
+    let height = 500;
 
     onMount(async () => {
         try {
@@ -55,7 +41,7 @@
                 );
 
                 return {
-                    date: format(day, "MM-dd"),
+                    date: format(day, "dd"),
                     value: apiDataAt?.total_minutes?.Float64 ?? 0,
                 };
             });
@@ -66,96 +52,90 @@
             loading = false;
         }
     });
+
+    function showTooltip(value, x, y) {
+        const tooltip = document.getElementById("tooltip");
+        tooltip.style.display = "block";
+        tooltip.style.left = `${x}px`;
+        tooltip.style.top = `${y + 2 * rectSize}px`;
+        tooltip.innerHTML = `Minutes: ${value}`;
+    }
+
+    function hideTooltip() {
+        const tooltip = document.getElementById("tooltip");
+        tooltip.style.display = "none";
+    }
 </script>
 
 <div class="flex flex-col p-4 w-full">
-    <h3 class="h3">Progress</h3>
+    <div class="flex flex-row">
+        <h3>{format(month, "MMMM")}</h3>
+    </div>
+    <div
+        id="tooltip"
+        style="position: absolute; display: none; background: white; border: 1px solid black; padding: 5px; border-radius: 5px;"
+    ></div>
     <div class="flex h-full justify-center items-center">
         <div class="w-full h-full">
-            <div class="chart" bind:clientWidth={width}>
-                <svg {width} {height}>
-                    <g class="bars">
-                        {#each data as point, i}
-                            <rect
-                                x={xScale(i) + 2}
-                                y={yScale(point.value)}
-                                width={barWidth * 0.9}
-                                height={yScale(0) - yScale(point.value)}
-                            />
+            <!-- profile chart</script> -->
+            <svg {width} {height}>
+                <g class="boxes">
+                    {#each data as point, i}
+                        {@const row: number = Math.floor(i / verticalCount)}
+                        {@const col: number = Math.floor(i % verticalCount)}
+                        {@const x: number = col * (rectSize + rectPadding) + rectPadding}
+                        {@const y: number = row * (rectSize + rectPadding) + rectPadding}
 
-                            <!-- Circle showing the start of each Bar -->
-                            <circle
-                                cx={xScale(i) + 2}
-                                cy={yScale(point.value)}
-                                fill="black"
-                                r="5"
-                            />
-                        {/each}
-                    </g>
-
-                    <g class="axis y-axis">
-                        {#each yTicks as tick}
-                            <g
-                                class="tick tick-{tick}"
-                                transform="translate(0, {yScale(tick)})"
-                            >
-                                <line x2="100%" />
-                                <text y="-4">{tick} </text></g
-                            >
-                        {/each}
-                    </g>
-
-                    <!-- Design x axis -->
-                    <g class="axis x-axis">
-                        {#each data as point, i}
-                            <g
-                                class="tick"
-                                transform="translate({xScale(i)}, {height})"
-                            >
-                                <text x={barWidth / 2} y="-4" font-size="10">
-                                    {point.date}
-                                </text></g
-                            >
-                        {/each}
-                    </g>
-                </svg>
-            </div>
+                        <rect
+                            x={x}
+                            y={y+ 5}
+                            width={rectSize}
+                            height={rectSize}
+                            fill={point.value > 20 ? "green" : "grey"}
+                            rx="10"
+                            ry="10"
+                            in:fade={{ delay: i * 20, duration: 50 }}
+                            onmouseover={() => showTooltip(point.value, x, y)}
+                            onfocus={() => showTooltip(point.value, x, y)}
+                            onmouseout={hideTooltip}
+                            onblur={hideTooltip}
+                            role="img"
+                            aria-label={`Day ${point.date}, Minutes: ${point.value}`}
+                        />
+                        <rect
+                            x={col * (rectSize + rectPadding) +
+                                rectPadding +
+                                rectSize / 2 -
+                                15}
+                            y={row * (rectSize + rectPadding) +
+                                rectPadding +
+                                rectSize -
+                                5}
+                            width="30"
+                            height="15"
+                            fill="white"
+                            rx="5"
+                            ry="5"
+                        />
+                        <text
+                            x={col * (rectSize + rectPadding) +
+                                rectPadding +
+                                rectSize / 2}
+                            y={row * (rectSize + rectPadding) +
+                                rectPadding +
+                                rectSize +
+                                5}
+                            text-anchor="middle"
+                            alignment-baseline="middle"
+                            font-size="10"
+                            fill="black"
+                        >
+                            {point.date}
+                        </text>
+                    {/each}
+                </g>
+            </svg>
         </div>
     </div>
 </div>
 
-<style>
-    .x-axis .tick text {
-        text-anchor: middle;
-        color: white;
-    }
-
-    .bars rect {
-        fill: rgba(var(--color-secondary-500) / 1);
-        stroke: none;
-    }
-
-    .tick {
-        font-family: Poppins, sans-serif;
-        font-size: 0.725em;
-        font-weight: 200;
-        color: black;
-    }
-
-    .tick text {
-        fill: black;
-        text-anchor: start;
-        color: black;
-    }
-
-    .tick line {
-        stroke: rgba(var(--color-secondary-500) / 1);
-        stroke-dasharray: 2;
-        opacity: 1;
-    }
-
-    .tick.tick-0 line {
-        display: inline-block;
-        stroke-dasharray: 0;
-    }
-</style>
