@@ -27,9 +27,8 @@
     const rectSize = 50;
     const rectPadding = 15;
 
-    let width = $state(500);
-    let height = 500;
-
+    let width = 500;
+    let height = 400;
     onMount(async () => {
         try {
             const apiData = await GetDailyTotalMinutes();
@@ -78,7 +77,7 @@
     <div class="flex h-full justify-center items-center">
         <div class="w-full h-full">
             <!-- profile chart</script> -->
-            <svg {width} {height}>
+            <svg {width} {height} style="max-width: 500px; min-width: 300px;">
                 <g class="boxes">
                     {#each data as point, i}
                         {@const row: number = Math.floor(i / verticalCount)}
@@ -87,8 +86,8 @@
                         {@const y: number = row * (rectSize + rectPadding) + rectPadding}
 
                         <rect
-                            x={x}
-                            y={y+ 5}
+                            {x}
+                            y={y + 5}
                             width={rectSize}
                             height={rectSize}
                             fill={point.value > 20 ? "green" : "grey"}
@@ -138,4 +137,3 @@
         </div>
     </div>
 </div>
-
