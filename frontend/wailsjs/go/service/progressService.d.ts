@@ -6,3 +6,5 @@ import {service} from '../models';
 export function GetDailyTotalMinutes():Promise<Array<database.GetDailyTotalMinutesRow>>;
 
 export function GetStats():Promise<service.GetStatsResult>;
+
+export function GetTotalExpForUser():Promise<number>;

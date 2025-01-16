@@ -1,5 +1,8 @@
 <script lang="ts">
-    import { GetDailyTotalMinutes } from "@/services/service";
+    import {
+        GetDailyTotalMinutes,
+        GetTotalExpForUser,
+    } from "@/services/service";
     import {
         eachDayOfInterval,
         format,
@@ -14,6 +17,8 @@
         data: null,
         error: "",
     });
+
+    let totalExp = $state(0);
 
     const year = new Date().getFullYear();
     const month = new Date().getMonth();
@@ -32,6 +37,7 @@
     onMount(async () => {
         try {
             const apiData = await GetDailyTotalMinutes();
+            totalExp = await GetTotalExpForUser();
 
             data = daysInMonth.map((day: any) => {
                 const compareDateFmt = format(day, "yyyy-MM-dd");
@@ -67,8 +73,9 @@
 </script>
 
 <div class="flex flex-col p-4 w-full">
-    <div class="flex flex-row">
+    <div class="flex flex-row align-center justify-between">
         <h3>{format(month, "MMMM")}</h3>
+        <h3>Total Exp: {totalExp}</h3>
     </div>
     <div
         id="tooltip"

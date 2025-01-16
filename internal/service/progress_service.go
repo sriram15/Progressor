@@ -19,14 +19,16 @@ type ProgressService interface {
 }
 
 type progressService struct {
-	ctx     context.Context
-	queries *database.Queries
+	ctx                   context.Context
+	queries               *database.Queries
+	taskCompletionService TaskCompletionService
 }
 
-func NewProgressService(queries *database.Queries) ProgressService {
+func NewProgressService(queries *database.Queries, taskCompletionService TaskCompletionService) ProgressService {
 	return &progressService{
-		ctx:     context.Background(),
-		queries: queries,
+		ctx:                   context.Background(),
+		queries:               queries,
+		taskCompletionService: taskCompletionService,
 	}
 
 }
@@ -62,4 +64,8 @@ func (p *progressService) GetStats() (GetStatsResult, error) {
 
 func (p *progressService) GetDailyTotalMinutes() ([]database.GetDailyTotalMinutesRow, error) {
 	return p.queries.GetDailyTotalMinutes(p.ctx)
+}
+
+func (p *progressService) GetTotalExpForUser() (float64, error) {
+	return p.taskCompletionService.TotalUserExp(userId)
 }

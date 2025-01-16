@@ -34,6 +34,8 @@ type UpdateCardParams struct {
 	Description   string `json:"description"`
 }
 
+const userId = 1
+
 type CardService interface {
 	GetAll(projectId uint, status CardStatus) ([]database.ListCardsRow, error)
 	GetCardById(projectId uint, id uint) (database.GetCardRow, error)
@@ -48,18 +50,20 @@ type CardService interface {
 }
 
 type cardService struct {
-	ctx            context.Context
-	db             *sql.DB
-	queries        *database.Queries
-	projectService ProjectService
+	ctx                   context.Context
+	db                    *sql.DB
+	queries               *database.Queries
+	projectService        ProjectService
+	taskCompletionService TaskCompletionService
 }
 
-func NewCardService(db *sql.DB, queries *database.Queries, projectService ProjectService) CardService {
+func NewCardService(db *sql.DB, queries *database.Queries, projectService ProjectService, taskComtaskCompletionService TaskCompletionService) CardService {
 	return &cardService{
-		ctx:            context.Background(),
-		db:             db,
-		queries:        queries,
-		projectService: projectService,
+		ctx:                   context.Background(),
+		db:                    db,
+		queries:               queries,
+		projectService:        projectService,
+		taskCompletionService: taskComtaskCompletionService,
 	}
 }
 
@@ -167,7 +171,14 @@ func (c *cardService) UpdateCardStatus(projectId uint, id uint, status CardStatu
 		return err
 	}
 
-	card, err := c.queries.GetCard(c.ctx, database.GetCardParams{
+	tx, err := c.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	qtx := c.queries.WithTx(tx)
+
+	card, err := qtx.GetCard(c.ctx, database.GetCardParams{
 		ID:        int64(id),
 		Projectid: int64(projectId),
 	})
@@ -184,7 +195,7 @@ func (c *cardService) UpdateCardStatus(projectId uint, id uint, status CardStatu
 		completedAt = sql.NullTime{Valid: true, Time: time.Now().UTC()}
 	}
 
-	return c.queries.UpdateCard(c.ctx, database.UpdateCardParams{
+	err = qtx.UpdateCard(c.ctx, database.UpdateCardParams{
 		Title:         card.Title,
 		Description:   card.Description,
 		ID:            card.CardID,
@@ -193,6 +204,39 @@ func (c *cardService) UpdateCardStatus(projectId uint, id uint, status CardStatu
 		Estimatedmins: card.Estimatedmins,
 		Completedat:   completedAt,
 	})
+	if err != nil {
+		return err
+	}
+
+	// If status is done, then also insert in TaskCompletions Table
+	if status == Done {
+		// Calculate base exp, time bonus exp and streak bonus exp (replace with your logic).
+		baseExp := int64(10)
+		timeBonusExp := int64(card.Trackedmins / 5) // TODO: Get from constant
+		streakBonusExp := int64(0)                  // TODO
+
+		_, err := qtx.GetTaskCompletion(c.ctx, database.GetTaskCompletionParams{
+			Cardid: card.CardID,
+			Userid: userId, // TODO: Get from session
+		})
+
+		// only create record if it does not exist
+		if errors.Is(err, sql.ErrNoRows) {
+			_, err = qtx.CreateTaskCompletion(c.ctx, database.CreateTaskCompletionParams{
+				Cardid:         card.CardID,
+				Userid:         userId,
+				Baseexp:        baseExp,
+				Timebonusexp:   timeBonusExp,
+				Streakbonusexp: streakBonusExp,
+				Totalexp:       baseExp + timeBonusExp + streakBonusExp,
+			})
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return tx.Commit()
 }
 
 func (c *cardService) AddCard(projectId uint, cardTitle string, estimatedMins uint) error {

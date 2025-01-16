@@ -9,3 +9,7 @@ export function GetDailyTotalMinutes() {
 export function GetStats() {
   return window['go']['service']['progressService']['GetStats']();
 }
+
+export function GetTotalExpForUser() {
+  return window['go']['service']['progressService']['GetTotalExpForUser']();
+}

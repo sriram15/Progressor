@@ -9,6 +9,13 @@ import (
 	"time"
 )
 
+type ArcherStat struct {
+	ID        int64  `json:"id"`
+	Userid    int64  `json:"userid"`
+	Statname  string `json:"statname"`
+	Statvalue int64  `json:"statvalue"`
+}
+
 type Card struct {
 	ID            int64          `json:"id"`
 	Title         string         `json:"title"`
@@ -29,6 +36,17 @@ type Project struct {
 	Createdat sql.NullTime `json:"createdat"`
 }
 
+type TaskCompletion struct {
+	ID             int64     `json:"id"`
+	Cardid         int64     `json:"cardid"`
+	Userid         int64     `json:"userid"`
+	Completiontime time.Time `json:"completiontime"`
+	Baseexp        int64     `json:"baseexp"`
+	Timebonusexp   int64     `json:"timebonusexp"`
+	Streakbonusexp int64     `json:"streakbonusexp"`
+	Totalexp       int64     `json:"totalexp"`
+}
+
 type TimeEntry struct {
 	ID        int64     `json:"id"`
 	Cardid    int64     `json:"cardid"`
@@ -38,9 +56,14 @@ type TimeEntry struct {
 }
 
 type UserProfile struct {
-	ID        int64        `json:"id"`
-	Name      string       `json:"name"`
-	Settings  string       `json:"settings"`
-	Createdat sql.NullTime `json:"createdat"`
-	Updatedat sql.NullTime `json:"updatedat"`
+	ID                 int64        `json:"id"`
+	Name               string       `json:"name"`
+	Settings           string       `json:"settings"`
+	Createdat          sql.NullTime `json:"createdat"`
+	Updatedat          sql.NullTime `json:"updatedat"`
+	ProgressionPoints  int64        `json:"progressionPoints"`
+	ArcherLevel        int64        `json:"archerLevel"`
+	ArcherExperience   int64        `json:"archerExperience"`
+	IdleResources      int64        `json:"idleResources"`
+	LastLoginTimeStamp sql.NullTime `json:"lastLoginTimeStamp"`
 }

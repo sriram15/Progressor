@@ -46,8 +46,9 @@ func main() {
 
 	queries := database.New(db)
 	projectService := service.NewProjectService()
-	cardService := service.NewCardService(db, queries, projectService)
-	progressService := service.NewProgressService(queries)
+	taskCompletionService := service.NewTaskCompletionService(db, queries)
+	cardService := service.NewCardService(db, queries, projectService, taskCompletionService)
+	progressService := service.NewProgressService(queries, taskCompletionService)
 	settingsService := service.NewSettingService()
 	// shortcuts := internal.NewShortcut()
 
