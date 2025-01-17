@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"embed"
-	"fmt"
 	"log"
 	"runtime"
 
@@ -21,21 +20,9 @@ import (
 //go:embed all:frontend/dist
 var assets embed.FS
 
-//go:embed all:internal/database/migrations
-var migrations embed.FS
-
 func main() {
 
 	var startupCtx context.Context
-
-	entries, err := migrations.ReadDir("internal/database/migrations")
-	if err != nil {
-		log.Fatalf("Failed to read migrations directory: %v", err)
-	}
-
-	for _, entry := range entries {
-		fmt.Println(entry.Name())
-	}
 
 	db, err := internal.OpenDB()
 	if err != nil {

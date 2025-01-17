@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"testing"
 
-	_ "github.com/glebarez/sqlite"
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/pressly/goose/v3"
 	"github.com/sriram15/progressor-todo-app/internal/database"
 	"github.com/stretchr/testify/assert"
