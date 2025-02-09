@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"context"
 	"database/sql"
 	"embed"
 	"fmt"
@@ -8,8 +9,8 @@ import (
 	"path/filepath"
 	"runtime"
 
-	_ "github.com/mattn/go-sqlite3"
 	"github.com/pressly/goose/v3"
+	_ "github.com/tursodatabase/go-libsql"
 )
 
 const MIGRATION_PATH = "database/migrations"
@@ -19,7 +20,7 @@ const DATABASE_NAME = "progressor.db"
 var embedMigrations embed.FS
 
 // getDatabasePath returns the path to the SQLite database file.
-func GetDatabasePath() (string, error) {
+func GetDatabasePath(prependUrl string) (string, error) {
 
 	// Check if DATBASE_PATH env variable is set
 	if databasePathEnv := os.Getenv("DATABASE_PATH"); databasePathEnv != "" {
@@ -41,7 +42,7 @@ func GetDatabasePath() (string, error) {
 	}
 
 	// Create a directory for your app
-	appDir = filepath.Join(appDir, APP_NAME)
+	appDir = filepath.Join(prependUrl, appDir, APP_NAME)
 	if err := os.MkdirAll(appDir, os.ModePerm); err != nil {
 		return "", err
 	}
@@ -52,19 +53,31 @@ func GetDatabasePath() (string, error) {
 }
 
 func OpenDB() (*sql.DB, error) {
-	dbPath, err := GetDatabasePath()
+	dbPath, err := GetDatabasePath("file:")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get database path: %v", err)
 	}
 
-	db, err := sql.Open("sqlite3", dbPath)
+	// db, err := sql.Open("sqlite3", dbPath)
+	fmt.Println(dbPath)
+	db, err := sql.Open("libsql", dbPath)
 	if err != nil {
 		return nil, fmt.Errorf("sql: failed to open DB: %v", err)
 	}
 
 	goose.SetBaseFS(embedMigrations)
-	if err := goose.Up(db, MIGRATION_PATH); err != nil {
+	provider, err := goose.NewProvider(goose.DialectSQLite3, db, os.DirFS("./internal/database/migrations"))
+	if err != nil {
+		return nil, fmt.Errorf("error creating goose provider: ", err)
+	}
+
+	results, err := provider.Up(context.Background())
+	if err != nil {
 		return nil, fmt.Errorf("failed to create migration: %v", err)
+	}
+
+	for _, r := range results {
+		fmt.Printf("OK   %s (%s)\n", r.Source.Path, r.Duration)
 	}
 
 	fmt.Println("Migration created successfully.")
