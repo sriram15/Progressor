@@ -1,7 +1,7 @@
 package service
 
 import (
-	"github.com/sriram15/progressor-todo-app/internal"
+	"github.com/sriram15/progressor-todo-app/internal/connection"
 )
 
 type SettingService interface {
@@ -18,13 +18,10 @@ func NewSettingService() SettingService {
 
 func (s *settingService) GetAllSettings() (interface{}, error) {
 
-	dbPath, err := internal.GetDatabasePath("")
-	if err != nil {
-		return nil, err
-	}
+	dbType, dbPath := connection.GetDBInfo()
 	settings := []interface{}{
+		map[string]string{"key": "dbType", "value": dbType, "display": "Database Type"},
 		map[string]string{"key": "dbPath", "value": dbPath, "display": "Database Path"},
-		map[string]string{"key": "dbLocation", "value": "local", "display": "Local"},
 		map[string]string{"key": "shortcut_open", "value": "Ctrl + Shift + P", "display": "Shortcut - Open App"},
 	}
 

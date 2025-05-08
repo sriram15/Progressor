@@ -17,7 +17,7 @@ goose_down:
 start:
 	@echo "Starting Wails application..."
 	rm -f ${E2E_DB_PATH}/progressor.db
-	DATABASE_PATH=$(E2E_DB_PATH) wails dev -tags webkit2_41 & \
+	LOCAL_DATABASE_PATH=$(E2E_DB_PATH) wails dev -tags webkit2_41 & \
 	PID=$$!; \
 	echo $$PID > wails.pid; \
 	while ! nc -z localhost $(WAILS_WEB_PORT); do sleep 1; done; \

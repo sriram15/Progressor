@@ -6,7 +6,8 @@ import (
 	"log"
 	"runtime"
 
-	"github.com/sriram15/progressor-todo-app/internal"
+	"github.com/joho/godotenv"
+	"github.com/sriram15/progressor-todo-app/internal/connection"
 	"github.com/sriram15/progressor-todo-app/internal/database"
 	"github.com/sriram15/progressor-todo-app/internal/service"
 	"github.com/wailsapp/wails/v2"
@@ -21,15 +22,18 @@ import (
 var assets embed.FS
 
 func main() {
+	// Load .env file at the very beginning
+	if err := godotenv.Load(); err != nil {
+		log.Println("No .env file found or error loading .env file (this may be normal if env vars are set externally):", err)
+	}
 
 	var startupCtx context.Context
 
-	db, err := internal.OpenDB()
+	db, err := connection.OpenDB()
 	if err != nil {
-		log.Fatalf("Failed to auto-migrate: %v", err)
-		panic("There is an issue with auto-migrate")
+		log.Fatalf("Failed to initialize database: %v", err)
 	}
-	// TODO: Find a place to close the db
+	// defer db.Close()
 
 	queries := database.New(db)
 	projectService := service.NewProjectService()
@@ -69,7 +73,7 @@ func main() {
 		OnBeforeClose: func(ctx context.Context) (prevent bool) {
 			err := cardService.Cleanup()
 			if err != nil {
-				log.Printf(err.Error())
+				log.Println(err.Error())
 			}
 			dialog, err := wailsRuntime.MessageDialog(ctx, wailsRuntime.MessageDialogOptions{
 				Type:    wailsRuntime.QuestionDialog,
