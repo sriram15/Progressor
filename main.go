@@ -1,33 +1,34 @@
 package main
 
 import (
-	"context"
 	"embed"
+	_ "embed"
 	"log"
-	"runtime"
+	"time"
 
 	"github.com/joho/godotenv"
 	"github.com/sriram15/progressor-todo-app/internal/connection"
 	"github.com/sriram15/progressor-todo-app/internal/database"
 	"github.com/sriram15/progressor-todo-app/internal/service"
-	"github.com/wailsapp/wails/v2"
-	"github.com/wailsapp/wails/v2/pkg/menu"
-	"github.com/wailsapp/wails/v2/pkg/menu/keys"
-	"github.com/wailsapp/wails/v2/pkg/options"
-	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
-	wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"
+	"github.com/wailsapp/wails/v3/pkg/application"
 )
+
+// Wails uses Go's `embed` package to embed the frontend files into the binary.
+// Any files in the frontend/dist folder will be embedded into the binary and
+// made available to the frontend.
+// See https://pkg.go.dev/embed for more information.
 
 //go:embed all:frontend/dist
 var assets embed.FS
 
+// main function serves as the application's entry point. It initializes the application, creates a window,
+// and starts a goroutine that emits a time-based event every second. It subsequently runs the application and
+// logs any error that might occur.
 func main() {
-	// Load .env file at the very beginning
+
 	if err := godotenv.Load(); err != nil {
 		log.Println("No .env file found or error loading .env file (this may be normal if env vars are set externally):", err)
 	}
-
-	var startupCtx context.Context
 
 	db, err := connection.OpenDB()
 	if err != nil {
@@ -38,65 +39,64 @@ func main() {
 	queries := database.New(db)
 	projectService := service.NewProjectService()
 	taskCompletionService := service.NewTaskCompletionService(db, queries)
-	cardService := service.NewCardService(db, queries, projectService, taskCompletionService)
-	progressService := service.NewProgressService(queries, taskCompletionService)
-	settingsService := service.NewSettingService()
+	_ = service.NewCardService(db, queries, projectService, taskCompletionService)
+	_ = service.NewProgressService(queries, taskCompletionService)
+	_ = service.NewSettingService()
 	// shortcuts := internal.NewShortcut()
 
-	// Create menu
-	appMenu := menu.NewMenu()
-	fileMenu := appMenu.AddSubmenu("File")
-
-	fileMenu.AddText("Quit", keys.CmdOrCtrl("q"), func(_ *menu.CallbackData) {
-		wailsRuntime.Quit(startupCtx)
+	// Create a new Wails application by providing the necessary options.
+	// Variables 'Name' and 'Description' are for application metadata.
+	// 'Assets' configures the asset server with the 'FS' variable pointing to the frontend files.
+	// 'Bind' is a list of Go struct instances. The frontend has access to the methods of these instances.
+	// 'Mac' options tailor the application when running an macOS.
+	app := application.New(application.Options{
+		Name:        "progressor-todo-app",
+		Description: "A demo of using raw HTML & CSS",
+		Services: []application.Service{
+			application.NewService(&GreetService{}),
+			// application.NewService(cardService),
+			// application.NewService(progressService),
+			// application.NewService(settingsService),
+		},
+		Assets: application.AssetOptions{
+			Handler: application.AssetFileServerFS(assets),
+		},
+		Mac: application.MacOptions{
+			ApplicationShouldTerminateAfterLastWindowClosed: true,
+		},
 	})
-	fileMenu.AddText("Command Prompt", keys.CmdOrCtrl("k"), func(_ *menu.CallbackData) {
-		wailsRuntime.EventsEmit(startupCtx, "globalMenu:CommandPrompt")
+
+	// Create a new window with the necessary options.
+	// 'Title' is the title of the window.
+	// 'Mac' options tailor the window when running on macOS.
+	// 'BackgroundColour' is the background colour of the window.
+	// 'URL' is the URL that will be loaded into the webview.
+	app.NewWebviewWindowWithOptions(application.WebviewWindowOptions{
+		Title: "Window 1",
+		Mac: application.MacWindow{
+			InvisibleTitleBarHeight: 50,
+			Backdrop:                application.MacBackdropTranslucent,
+			TitleBar:                application.MacTitleBarHiddenInset,
+		},
+		BackgroundColour: application.NewRGB(27, 38, 54),
+		URL:              "/",
 	})
 
-	if runtime.GOOS == "darwin" {
-		appMenu.Append(menu.EditMenu()) // on macos platform, we should append EditMenu to enable Cmd+C,Cmd+V,Cmd+Z... shortcut
-	}
+	// Create a goroutine that emits an event containing the current time every second.
+	// The frontend can listen to this event and update the UI accordingly.
+	go func() {
+		for {
+			now := time.Now().Format(time.RFC1123)
+			app.EmitEvent("time", now)
+			time.Sleep(time.Second)
+		}
+	}()
 
-	// Create application with options
-	wailsApp := &options.App{
-		Title:      "Progressor",
-		Fullscreen: true,
-		AssetServer: &assetserver.Options{
-			Assets: assets,
-		},
-		// StartHidden:      true,
-		OnStartup: func(ctx context.Context) {
-			startupCtx = ctx
-			// shortcuts.Startup(ctx)
-		},
-		OnBeforeClose: func(ctx context.Context) (prevent bool) {
-			err := cardService.Cleanup()
-			if err != nil {
-				log.Println(err.Error())
-			}
-			dialog, err := wailsRuntime.MessageDialog(ctx, wailsRuntime.MessageDialogOptions{
-				Type:    wailsRuntime.QuestionDialog,
-				Title:   "Quit?",
-				Message: "Are you sure you want to quit?",
-			})
-			if err != nil {
-				return false
-			}
-			return dialog != "Yes"
-		},
-		Menu:             appMenu,
-		BackgroundColour: &options.RGBA{R: 27, G: 38, B: 54, A: 1},
-		Bind: []interface{}{
-			cardService,
-			progressService,
-			settingsService,
-		},
-	}
+	// Run the application. This blocks until the application has been exited.
+	err = app.Run()
 
-	err = wails.Run(wailsApp)
-
+	// If an error occurred while running the application, log it and exit.
 	if err != nil {
-		println("Error:", err.Error())
+		log.Fatal(err)
 	}
 }
