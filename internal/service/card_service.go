@@ -6,6 +6,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/sriram15/progressor-todo-app/internal/connection"
 	"github.com/sriram15/progressor-todo-app/internal/database"
 )
 
@@ -51,17 +52,13 @@ type ICardService interface {
 
 type CardService struct {
 	ctx                   context.Context
-	db                    *sql.DB
-	queries               *database.Queries
 	projectService        IProjectService
 	taskCompletionService ITaskCompletionService
 }
 
-func NewCardService(db *sql.DB, queries *database.Queries, projectService IProjectService, taskCompletionService ITaskCompletionService) *CardService {
+func NewCardService(projectService IProjectService, taskCompletionService ITaskCompletionService) *CardService {
 	return &CardService{
 		ctx:                   context.Background(),
-		db:                    db,
-		queries:               queries,
 		projectService:        projectService,
 		taskCompletionService: taskCompletionService,
 	}
@@ -79,7 +76,12 @@ func (c *CardService) GetAll(projectId uint, status CardStatus) ([]database.List
 	// 	return []database.ListCardsRow{}, ErrInvalidStatus
 	// }
 
-	cards, err := c.queries.ListCards(c.ctx, database.ListCardsParams{Projectid: int64(projectId), Status: int64(status)})
+	queries, err := connection.GetDBQuery()
+	if err != nil {
+		return nil, err
+	}
+
+	cards, err := queries.ListCards(c.ctx, database.ListCardsParams{Projectid: int64(projectId), Status: int64(status)})
 	return cards, err
 }
 
@@ -89,7 +91,12 @@ func (c *CardService) GetCardById(projectId uint, id uint) (database.GetCardRow,
 		return database.GetCardRow{}, err
 	}
 
-	card, err := c.queries.GetCard(c.ctx, database.GetCardParams{
+	queries, err := connection.GetDBQuery()
+	if err != nil {
+		return database.GetCardRow{}, err
+	}
+
+	card, err := queries.GetCard(c.ctx, database.GetCardParams{
 		ID:        int64(id),
 		Projectid: int64(projectId),
 	})
@@ -106,7 +113,12 @@ func (c *CardService) GetActiveTimeEntry(projectId uint, id uint) (database.Time
 		return database.TimeEntry{}, err
 	}
 
-	timeEntry, err := c.queries.GetActiveTimeEntry(c.ctx, int64(id))
+	queries, err := connection.GetDBQuery()
+	if err != nil {
+		return database.TimeEntry{}, err
+	}
+
+	timeEntry, err := queries.GetActiveTimeEntry(c.ctx, int64(id))
 	if err != nil {
 		return database.TimeEntry{}, err
 	}
@@ -121,7 +133,12 @@ func (c *CardService) DeleteCard(projectId uint, id uint) error {
 		return err
 	}
 
-	return c.queries.DeleteCard(c.ctx, database.DeleteCardParams{
+	queries, err := connection.GetDBQuery()
+	if err != nil {
+		return err
+	}
+
+	return queries.DeleteCard(c.ctx, database.DeleteCardParams{
 		ID:        int64(id),
 		Projectid: int64(projectId),
 	})
@@ -134,7 +151,11 @@ func (c *CardService) UpdateCard(projectId uint, id uint, updateCardParam Update
 		return err
 	}
 
-	card, err := c.queries.GetCard(c.ctx, database.GetCardParams{
+	queries, err := connection.GetDBQuery()
+	if err != nil {
+		return err
+	}
+	card, err := queries.GetCard(c.ctx, database.GetCardParams{
 		ID:        int64(id),
 		Projectid: int64(projectId),
 	})
@@ -154,7 +175,7 @@ func (c *CardService) UpdateCard(projectId uint, id uint, updateCardParam Update
 		description = sql.NullString{Valid: true, String: updateCardParam.Description}
 	}
 
-	return c.queries.UpdateCard(c.ctx, database.UpdateCardParams{
+	return queries.UpdateCard(c.ctx, database.UpdateCardParams{
 		Title:         updateCardParam.Title,
 		Description:   description,
 		ID:            card.CardID,
@@ -171,12 +192,22 @@ func (c *CardService) UpdateCardStatus(projectId uint, id uint, status CardStatu
 		return err
 	}
 
-	tx, err := c.db.Begin()
+	db, err := connection.OpenDB()
+	if db != nil {
+		return err
+	}
+
+	tx, err := db.Begin()
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback()
-	qtx := c.queries.WithTx(tx)
+
+	queries, err := connection.GetDBQuery()
+	if err != nil {
+		return err
+	}
+	qtx := queries.WithTx(tx)
 
 	card, err := qtx.GetCard(c.ctx, database.GetCardParams{
 		ID:        int64(id),
@@ -251,8 +282,11 @@ func (c *CardService) AddCard(projectId uint, cardTitle string, estimatedMins ui
 		Projectid:     int64(projectId),
 		Estimatedmins: int64(estimatedMins),
 	}
-
-	return c.queries.CreateCard(c.ctx, card)
+	queries, err := connection.GetDBQuery()
+	if err != nil {
+		return err
+	}
+	return queries.CreateCard(c.ctx, card)
 }
 
 func (c *CardService) StartCard(projectId uint, id uint) error {
@@ -261,7 +295,11 @@ func (c *CardService) StartCard(projectId uint, id uint) error {
 		return err
 	}
 
-	card, err := c.queries.GetCard(c.ctx, database.GetCardParams{
+	queries, err := connection.GetDBQuery()
+	if err != nil {
+		return err
+	}
+	card, err := queries.GetCard(c.ctx, database.GetCardParams{
 		ID:        int64(id),
 		Projectid: int64(projectId),
 	})
@@ -275,7 +313,7 @@ func (c *CardService) StartCard(projectId uint, id uint) error {
 	}
 
 	// Check for other open cards which is currently in progress and stop the timer there
-	activeCard, err := c.queries.GetActiveCard(c.ctx)
+	activeCard, err := queries.GetActiveCard(c.ctx)
 
 	// When the active card is empty. It will throw sql.ErrNoRows. If the err is not that, then return err
 	if err != nil {
@@ -289,12 +327,17 @@ func (c *CardService) StartCard(projectId uint, id uint) error {
 		}
 	}
 
-	tx, err := c.db.Begin()
+	db, err := connection.OpenDB()
+	if err != nil {
+		return err
+	}
+
+	tx, err := db.Begin()
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback()
-	qtx := c.queries.WithTx(tx)
+	qtx := queries.WithTx(tx)
 
 	err = qtx.UpdateCardActive(c.ctx, database.UpdateCardActiveParams{
 		ID:          int64(id),
@@ -325,7 +368,11 @@ func (c *CardService) StopCard(projectId uint, id uint) error {
 		return err
 	}
 
-	card, err := c.queries.GetCard(c.ctx, database.GetCardParams{
+	queries, err := connection.GetDBQuery()
+	if err != nil {
+		return err
+	}
+	card, err := queries.GetCard(c.ctx, database.GetCardParams{
 		ID:        int64(id),
 		Projectid: int64(projectId),
 	})
@@ -338,12 +385,17 @@ func (c *CardService) StopCard(projectId uint, id uint) error {
 		return ErrCardTrackingStopped
 	}
 
-	tx, err := c.db.Begin()
+	db, err := connection.OpenDB()
+	if err != nil {
+		return err
+	}
+
+	tx, err := db.Begin()
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback()
-	qtx := c.queries.WithTx(tx)
+	qtx := queries.WithTx(tx)
 
 	// Get the active time entry
 	activeTimeentry, err := qtx.GetActiveTimeEntry(c.ctx, int64(id))
@@ -377,7 +429,11 @@ func (c *CardService) StopCard(projectId uint, id uint) error {
 func (c *CardService) Cleanup() error {
 
 	// Check for other open cards which is currently in progress and stop the timer there
-	activeCard, err := c.queries.GetActiveCard(c.ctx)
+	queries, err := connection.GetDBQuery()
+	if err != nil {
+		return err
+	}
+	activeCard, err := queries.GetActiveCard(c.ctx)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil

@@ -25,6 +25,17 @@ func (s *SettingService) GetAllSettings() (interface{}, error) {
 		map[string]string{"key": "shortcut_open", "value": "Ctrl + Shift + P", "display": "Shortcut - Open App"},
 	}
 
+	db, err := connection.OpenDB()
+	if err != nil {
+		return nil, err
+	}
+
+	cards, err := db.Query("SELECT * FROM Cards")
+	if err != nil {
+		return settings, err
+	}
+	defer cards.Close()
+
 	return settings, nil
 }
 

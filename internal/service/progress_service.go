@@ -4,6 +4,7 @@ import (
 	"context"
 	"math"
 
+	"github.com/sriram15/progressor-todo-app/internal/connection"
 	"github.com/sriram15/progressor-todo-app/internal/database"
 )
 
@@ -20,14 +21,12 @@ type IProgressService interface {
 
 type ProgressService struct {
 	ctx                   context.Context
-	queries               *database.Queries
 	taskCompletionService ITaskCompletionService
 }
 
-func NewProgressService(queries *database.Queries, taskCompletionService ITaskCompletionService) *ProgressService {
+func NewProgressService(taskCompletionService ITaskCompletionService) *ProgressService {
 	return &ProgressService{
 		ctx:                   context.Background(),
-		queries:               queries,
 		taskCompletionService: taskCompletionService,
 	}
 
@@ -35,16 +34,21 @@ func NewProgressService(queries *database.Queries, taskCompletionService ITaskCo
 
 func (p *ProgressService) GetStats() (GetStatsResult, error) {
 
-	weekMins, err := p.queries.AggregateWeekHours(p.ctx, int64(1))
-	if err != nil {
-		return GetStatsResult{}, err
-	}
-	monthMins, err := p.queries.AggregateMonthHours(p.ctx, int64(1))
+	queries, err := connection.GetDBQuery()
 	if err != nil {
 		return GetStatsResult{}, err
 	}
 
-	yearMins, err := p.queries.AggregateYearHours(p.ctx, int64(1))
+	weekMins, err := queries.AggregateWeekHours(p.ctx, int64(1))
+	if err != nil {
+		return GetStatsResult{}, err
+	}
+	monthMins, err := queries.AggregateMonthHours(p.ctx, int64(1))
+	if err != nil {
+		return GetStatsResult{}, err
+	}
+
+	yearMins, err := queries.AggregateYearHours(p.ctx, int64(1))
 	if err != nil {
 		return GetStatsResult{}, err
 	}
@@ -63,7 +67,12 @@ func (p *ProgressService) GetStats() (GetStatsResult, error) {
 }
 
 func (p *ProgressService) GetDailyTotalMinutes() ([]database.GetDailyTotalMinutesRow, error) {
-	return p.queries.GetDailyTotalMinutes(p.ctx)
+
+	queries, err := connection.GetDBQuery()
+	if err != nil {
+		return []database.GetDailyTotalMinutesRow{}, err
+	}
+	return queries.GetDailyTotalMinutes(p.ctx)
 }
 
 func (p *ProgressService) GetTotalExpForUser() (float64, error) {

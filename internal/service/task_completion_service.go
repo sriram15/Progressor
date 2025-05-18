@@ -2,8 +2,8 @@ package service
 
 import (
 	"context"
-	"database/sql"
 
+	"github.com/sriram15/progressor-todo-app/internal/connection"
 	"github.com/sriram15/progressor-todo-app/internal/database"
 )
 
@@ -15,16 +15,12 @@ type ITaskCompletionService interface {
 }
 
 type TaskCompletionService struct {
-	ctx     context.Context
-	db      *sql.DB
-	queries *database.Queries
+	ctx context.Context
 }
 
-func NewTaskCompletionService(db *sql.DB, queries *database.Queries) *TaskCompletionService {
+func NewTaskCompletionService() *TaskCompletionService {
 	return &TaskCompletionService{
-		ctx:     context.Background(),
-		db:      db,
-		queries: queries,
+		ctx: context.Background(),
 	}
 }
 
@@ -32,7 +28,12 @@ func NewTaskCompletionService(db *sql.DB, queries *database.Queries) *TaskComple
 func (t *TaskCompletionService) CreateTaskCompletion(cardId int64, userId int64, baseExp int64, timeBonusExp int64, streakBonusExp int64) (database.TaskCompletion, error) {
 	totalExp := baseExp + timeBonusExp + streakBonusExp
 
-	taskValue, err := t.queries.CreateTaskCompletion(t.ctx, database.CreateTaskCompletionParams{
+	queries, err := connection.GetDBQuery()
+	if err != nil {
+		return database.TaskCompletion{}, err
+	}
+
+	taskValue, err := queries.CreateTaskCompletion(t.ctx, database.CreateTaskCompletionParams{
 		Cardid:         cardId,
 		Userid:         userId,
 		Baseexp:        baseExp,
@@ -50,7 +51,12 @@ func (t *TaskCompletionService) CreateTaskCompletion(cardId int64, userId int64,
 
 // GetTaskCompletion retrieves a TaskCompletion record using cardId and userId
 func (t *TaskCompletionService) GetTaskCompletion(cardId int64, userId int64) (database.TaskCompletion, error) {
-	taskCompletion, err := t.queries.GetTaskCompletion(t.ctx, database.GetTaskCompletionParams{
+
+	queries, err := connection.GetDBQuery()
+	if err != nil {
+		return database.TaskCompletion{}, err
+	}
+	taskCompletion, err := queries.GetTaskCompletion(t.ctx, database.GetTaskCompletionParams{
 		Cardid: cardId,
 		Userid: userId,
 	})
@@ -63,7 +69,12 @@ func (t *TaskCompletionService) GetTaskCompletion(cardId int64, userId int64) (d
 
 // ListTaskCompletionsByUser lists all task completions for a user
 func (t *TaskCompletionService) ListTaskCompletionsByUser(userId int64) ([]database.TaskCompletion, error) {
-	taskCompletions, err := t.queries.ListTaskCompletionsByUser(t.ctx, userId)
+
+	queries, err := connection.GetDBQuery()
+	if err != nil {
+		return []database.TaskCompletion{}, err
+	}
+	taskCompletions, err := queries.ListTaskCompletionsByUser(t.ctx, userId)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +84,12 @@ func (t *TaskCompletionService) ListTaskCompletionsByUser(userId int64) ([]datab
 
 // TotalUserExp calculates total user exp
 func (t *TaskCompletionService) TotalUserExp(userId int64) (float64, error) {
-	totalExp, err := t.queries.TotalUserExp(t.ctx, userId)
+
+	queries, err := connection.GetDBQuery()
+	if err != nil {
+		return 0, err
+	}
+	totalExp, err := queries.TotalUserExp(t.ctx, userId)
 	if err != nil {
 		return 0, err
 	}
