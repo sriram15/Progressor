@@ -36,7 +36,7 @@ type UpdateCardParams struct {
 
 const userId = 1
 
-type CardService interface {
+type ICardService interface {
 	GetAll(projectId uint, status CardStatus) ([]database.ListCardsRow, error)
 	GetCardById(projectId uint, id uint) (database.GetCardRow, error)
 	GetActiveTimeEntry(projectId uint, id uint) (database.TimeEntry, error)
@@ -49,25 +49,25 @@ type CardService interface {
 	Cleanup() error
 }
 
-type cardService struct {
+type CardService struct {
 	ctx                   context.Context
 	db                    *sql.DB
 	queries               *database.Queries
-	projectService        ProjectService
-	taskCompletionService TaskCompletionService
+	projectService        IProjectService
+	taskCompletionService ITaskCompletionService
 }
 
-func NewCardService(db *sql.DB, queries *database.Queries, projectService ProjectService, taskComtaskCompletionService TaskCompletionService) CardService {
-	return &cardService{
+func NewCardService(db *sql.DB, queries *database.Queries, projectService IProjectService, taskCompletionService ITaskCompletionService) *CardService {
+	return &CardService{
 		ctx:                   context.Background(),
 		db:                    db,
 		queries:               queries,
 		projectService:        projectService,
-		taskCompletionService: taskComtaskCompletionService,
+		taskCompletionService: taskCompletionService,
 	}
 }
 
-func (c *cardService) GetAll(projectId uint, status CardStatus) ([]database.ListCardsRow, error) {
+func (c *CardService) GetAll(projectId uint, status CardStatus) ([]database.ListCardsRow, error) {
 
 	_, err := c.projectService.IsValidProject(projectId)
 	if err != nil {
@@ -83,7 +83,7 @@ func (c *cardService) GetAll(projectId uint, status CardStatus) ([]database.List
 	return cards, err
 }
 
-func (c *cardService) GetCardById(projectId uint, id uint) (database.GetCardRow, error) {
+func (c *CardService) GetCardById(projectId uint, id uint) (database.GetCardRow, error) {
 	_, err := c.projectService.IsValidProject(projectId)
 	if err != nil {
 		return database.GetCardRow{}, err
@@ -99,7 +99,7 @@ func (c *cardService) GetCardById(projectId uint, id uint) (database.GetCardRow,
 	return card, nil
 }
 
-func (c *cardService) GetActiveTimeEntry(projectId uint, id uint) (database.TimeEntry, error) {
+func (c *CardService) GetActiveTimeEntry(projectId uint, id uint) (database.TimeEntry, error) {
 
 	_, err := c.projectService.IsValidProject(projectId)
 	if err != nil {
@@ -114,7 +114,7 @@ func (c *cardService) GetActiveTimeEntry(projectId uint, id uint) (database.Time
 	return timeEntry, nil
 
 }
-func (c *cardService) DeleteCard(projectId uint, id uint) error {
+func (c *CardService) DeleteCard(projectId uint, id uint) error {
 
 	_, err := c.projectService.IsValidProject(projectId)
 	if err != nil {
@@ -127,7 +127,7 @@ func (c *cardService) DeleteCard(projectId uint, id uint) error {
 	})
 }
 
-func (c *cardService) UpdateCard(projectId uint, id uint, updateCardParam UpdateCardParams) error {
+func (c *CardService) UpdateCard(projectId uint, id uint, updateCardParam UpdateCardParams) error {
 
 	_, err := c.projectService.IsValidProject(projectId)
 	if err != nil {
@@ -165,7 +165,7 @@ func (c *cardService) UpdateCard(projectId uint, id uint, updateCardParam Update
 	})
 
 }
-func (c *cardService) UpdateCardStatus(projectId uint, id uint, status CardStatus) error {
+func (c *CardService) UpdateCardStatus(projectId uint, id uint, status CardStatus) error {
 	_, err := c.projectService.IsValidProject(projectId)
 	if err != nil {
 		return err
@@ -239,7 +239,7 @@ func (c *cardService) UpdateCardStatus(projectId uint, id uint, status CardStatu
 	return tx.Commit()
 }
 
-func (c *cardService) AddCard(projectId uint, cardTitle string, estimatedMins uint) error {
+func (c *CardService) AddCard(projectId uint, cardTitle string, estimatedMins uint) error {
 
 	if cardTitle == "" {
 		return ErrCardTitleRequired
@@ -255,7 +255,7 @@ func (c *cardService) AddCard(projectId uint, cardTitle string, estimatedMins ui
 	return c.queries.CreateCard(c.ctx, card)
 }
 
-func (c *cardService) StartCard(projectId uint, id uint) error {
+func (c *CardService) StartCard(projectId uint, id uint) error {
 	_, err := c.projectService.IsValidProject(projectId)
 	if err != nil {
 		return err
@@ -319,7 +319,7 @@ func (c *cardService) StartCard(projectId uint, id uint) error {
 	return tx.Commit()
 }
 
-func (c *cardService) StopCard(projectId uint, id uint) error {
+func (c *CardService) StopCard(projectId uint, id uint) error {
 	_, err := c.projectService.IsValidProject(projectId)
 	if err != nil {
 		return err
@@ -374,7 +374,7 @@ func (c *cardService) StopCard(projectId uint, id uint) error {
 	return tx.Commit()
 }
 
-func (c *cardService) Cleanup() error {
+func (c *CardService) Cleanup() error {
 
 	// Check for other open cards which is currently in progress and stop the timer there
 	activeCard, err := c.queries.GetActiveCard(c.ctx)

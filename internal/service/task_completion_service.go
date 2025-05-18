@@ -7,21 +7,21 @@ import (
 	"github.com/sriram15/progressor-todo-app/internal/database"
 )
 
-type TaskCompletionService interface {
+type ITaskCompletionService interface {
 	CreateTaskCompletion(cardId int64, userId int64, baseExp int64, timeBonusExp int64, streakBonusExp int64) (database.TaskCompletion, error)
 	GetTaskCompletion(cardId int64, userId int64) (database.TaskCompletion, error)
 	ListTaskCompletionsByUser(userId int64) ([]database.TaskCompletion, error)
 	TotalUserExp(userId int64) (float64, error)
 }
 
-type taskCompletionService struct {
+type TaskCompletionService struct {
 	ctx     context.Context
 	db      *sql.DB
 	queries *database.Queries
 }
 
-func NewTaskCompletionService(db *sql.DB, queries *database.Queries) TaskCompletionService {
-	return &taskCompletionService{
+func NewTaskCompletionService(db *sql.DB, queries *database.Queries) *TaskCompletionService {
+	return &TaskCompletionService{
 		ctx:     context.Background(),
 		db:      db,
 		queries: queries,
@@ -29,7 +29,7 @@ func NewTaskCompletionService(db *sql.DB, queries *database.Queries) TaskComplet
 }
 
 // CreateTaskCompletion creates a new TaskCompletion record and returns it
-func (t *taskCompletionService) CreateTaskCompletion(cardId int64, userId int64, baseExp int64, timeBonusExp int64, streakBonusExp int64) (database.TaskCompletion, error) {
+func (t *TaskCompletionService) CreateTaskCompletion(cardId int64, userId int64, baseExp int64, timeBonusExp int64, streakBonusExp int64) (database.TaskCompletion, error) {
 	totalExp := baseExp + timeBonusExp + streakBonusExp
 
 	taskValue, err := t.queries.CreateTaskCompletion(t.ctx, database.CreateTaskCompletionParams{
@@ -49,7 +49,7 @@ func (t *taskCompletionService) CreateTaskCompletion(cardId int64, userId int64,
 }
 
 // GetTaskCompletion retrieves a TaskCompletion record using cardId and userId
-func (t *taskCompletionService) GetTaskCompletion(cardId int64, userId int64) (database.TaskCompletion, error) {
+func (t *TaskCompletionService) GetTaskCompletion(cardId int64, userId int64) (database.TaskCompletion, error) {
 	taskCompletion, err := t.queries.GetTaskCompletion(t.ctx, database.GetTaskCompletionParams{
 		Cardid: cardId,
 		Userid: userId,
@@ -62,7 +62,7 @@ func (t *taskCompletionService) GetTaskCompletion(cardId int64, userId int64) (d
 }
 
 // ListTaskCompletionsByUser lists all task completions for a user
-func (t *taskCompletionService) ListTaskCompletionsByUser(userId int64) ([]database.TaskCompletion, error) {
+func (t *TaskCompletionService) ListTaskCompletionsByUser(userId int64) ([]database.TaskCompletion, error) {
 	taskCompletions, err := t.queries.ListTaskCompletionsByUser(t.ctx, userId)
 	if err != nil {
 		return nil, err
@@ -72,7 +72,7 @@ func (t *taskCompletionService) ListTaskCompletionsByUser(userId int64) ([]datab
 }
 
 // TotalUserExp calculates total user exp
-func (t *taskCompletionService) TotalUserExp(userId int64) (float64, error) {
+func (t *TaskCompletionService) TotalUserExp(userId int64) (float64, error) {
 	totalExp, err := t.queries.TotalUserExp(t.ctx, userId)
 	if err != nil {
 		return 0, err

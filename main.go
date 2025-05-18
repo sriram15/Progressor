@@ -39,9 +39,9 @@ func main() {
 	queries := database.New(db)
 	projectService := service.NewProjectService()
 	taskCompletionService := service.NewTaskCompletionService(db, queries)
-	_ = service.NewCardService(db, queries, projectService, taskCompletionService)
-	_ = service.NewProgressService(queries, taskCompletionService)
-	_ = service.NewSettingService()
+	cardService := service.NewCardService(db, queries, projectService, taskCompletionService)
+	progressService := service.NewProgressService(queries, taskCompletionService)
+	settingsService := service.NewSettingService()
 	// shortcuts := internal.NewShortcut()
 
 	// Create a new Wails application by providing the necessary options.
@@ -51,12 +51,11 @@ func main() {
 	// 'Mac' options tailor the application when running an macOS.
 	app := application.New(application.Options{
 		Name:        "progressor-todo-app",
-		Description: "A demo of using raw HTML & CSS",
+		Description: "Progressor Todo App",
 		Services: []application.Service{
-			application.NewService(&GreetService{}),
-			// application.NewService(cardService),
-			// application.NewService(progressService),
-			// application.NewService(settingsService),
+			application.NewService(cardService),
+			application.NewService(progressService),
+			application.NewService(settingsService),
 		},
 		Assets: application.AssetOptions{
 			Handler: application.AssetFileServerFS(assets),

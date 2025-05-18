@@ -4,19 +4,19 @@ import (
 	"github.com/sriram15/progressor-todo-app/internal/connection"
 )
 
-type SettingService interface {
+type ISettingService interface {
 	GetAllSettings() (interface{}, error)
 	SetSetting(key, value string) error
 }
 
-type settingService struct {
+type SettingService struct {
 }
 
-func NewSettingService() SettingService {
-	return &settingService{}
+func NewSettingService() *SettingService {
+	return &SettingService{}
 }
 
-func (s *settingService) GetAllSettings() (interface{}, error) {
+func (s *SettingService) GetAllSettings() (interface{}, error) {
 
 	dbType, dbPath := connection.GetDBInfo()
 	settings := []interface{}{
@@ -28,7 +28,7 @@ func (s *settingService) GetAllSettings() (interface{}, error) {
 	return settings, nil
 }
 
-func (s *settingService) SetSetting(key, value string) error {
+func (s *SettingService) SetSetting(key, value string) error {
 	// TODO: Implement saving to db
 	return nil
 }

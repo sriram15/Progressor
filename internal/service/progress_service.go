@@ -13,19 +13,19 @@ type GetStatsResult struct {
 	YearHrs  float64 `json:"yearHrs"`
 }
 
-type ProgressService interface {
+type IProgressService interface {
 	GetStats() (GetStatsResult, error)
 	GetDailyTotalMinutes() ([]database.GetDailyTotalMinutesRow, error)
 }
 
-type progressService struct {
+type ProgressService struct {
 	ctx                   context.Context
 	queries               *database.Queries
-	taskCompletionService TaskCompletionService
+	taskCompletionService ITaskCompletionService
 }
 
-func NewProgressService(queries *database.Queries, taskCompletionService TaskCompletionService) ProgressService {
-	return &progressService{
+func NewProgressService(queries *database.Queries, taskCompletionService ITaskCompletionService) *ProgressService {
+	return &ProgressService{
 		ctx:                   context.Background(),
 		queries:               queries,
 		taskCompletionService: taskCompletionService,
@@ -33,7 +33,7 @@ func NewProgressService(queries *database.Queries, taskCompletionService TaskCom
 
 }
 
-func (p *progressService) GetStats() (GetStatsResult, error) {
+func (p *ProgressService) GetStats() (GetStatsResult, error) {
 
 	weekMins, err := p.queries.AggregateWeekHours(p.ctx, int64(1))
 	if err != nil {
@@ -62,10 +62,10 @@ func (p *progressService) GetStats() (GetStatsResult, error) {
 	}, nil
 }
 
-func (p *progressService) GetDailyTotalMinutes() ([]database.GetDailyTotalMinutesRow, error) {
+func (p *ProgressService) GetDailyTotalMinutes() ([]database.GetDailyTotalMinutesRow, error) {
 	return p.queries.GetDailyTotalMinutes(p.ctx)
 }
 
-func (p *progressService) GetTotalExpForUser() (float64, error) {
+func (p *ProgressService) GetTotalExpForUser() (float64, error) {
 	return p.taskCompletionService.TotalUserExp(userId)
 }
