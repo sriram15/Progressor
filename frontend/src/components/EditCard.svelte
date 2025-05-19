@@ -3,7 +3,7 @@
     import { emitEvent, eventBus } from "@/stores/store";
     import { onMount } from "svelte";
     import { GetCardById, UpdateCard } from "@/services/service";
-    import { database } from "@wailsjs/go/models";
+    import { GetCardRow } from "@bindings_database";
     import Fa from "svelte-fa";
     import { faClose } from "@fortawesome/free-solid-svg-icons";
     import { createForm } from "svelte-forms-lib";
@@ -12,7 +12,7 @@
     type GetCardData = {
         isLoading: boolean;
         error: string | null;
-        data: database.GetCardRow | null;
+        data: GetCardRow | null;
     };
 
     let descriptionEditorRef: any = $state();

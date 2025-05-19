@@ -6,17 +6,17 @@
     import { EVENTS } from "@/constants";
     import { faSearch } from "@fortawesome/free-solid-svg-icons";
     import Fa from "svelte-fa";
-    import { EventsOff, EventsOn } from "@wailsjs/runtime";
+    // import { EventsOff, EventsOn } from "@wailsjs/runtime";
     import { onDestroy, onMount } from "svelte";
 
     onMount(() => {
-        EventsOn("globalMenu:CommandPrompt", () => {
-            showAddCardPopup = true;
-        });
+        // EventsOn("globalMenu:CommandPrompt", () => {
+        //     showAddCardPopup = true;
+        // });
     });
 
     onDestroy(() => {
-        EventsOff("globalMenu:CommandPrompt");
+        // EventsOff("globalMenu:CommandPrompt");
     });
 
     const onAddCardSubmit = async (data: any) => {

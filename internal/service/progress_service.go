@@ -4,6 +4,7 @@ import (
 	"context"
 	"math"
 
+	"github.com/sriram15/progressor-todo-app/internal/connection"
 	"github.com/sriram15/progressor-todo-app/internal/database"
 )
 
@@ -13,38 +14,41 @@ type GetStatsResult struct {
 	YearHrs  float64 `json:"yearHrs"`
 }
 
-type ProgressService interface {
+type IProgressService interface {
 	GetStats() (GetStatsResult, error)
 	GetDailyTotalMinutes() ([]database.GetDailyTotalMinutesRow, error)
 }
 
-type progressService struct {
+type ProgressService struct {
 	ctx                   context.Context
-	queries               *database.Queries
-	taskCompletionService TaskCompletionService
+	taskCompletionService ITaskCompletionService
 }
 
-func NewProgressService(queries *database.Queries, taskCompletionService TaskCompletionService) ProgressService {
-	return &progressService{
+func NewProgressService(taskCompletionService ITaskCompletionService) *ProgressService {
+	return &ProgressService{
 		ctx:                   context.Background(),
-		queries:               queries,
 		taskCompletionService: taskCompletionService,
 	}
 
 }
 
-func (p *progressService) GetStats() (GetStatsResult, error) {
+func (p *ProgressService) GetStats() (GetStatsResult, error) {
 
-	weekMins, err := p.queries.AggregateWeekHours(p.ctx, int64(1))
-	if err != nil {
-		return GetStatsResult{}, err
-	}
-	monthMins, err := p.queries.AggregateMonthHours(p.ctx, int64(1))
+	queries, err := connection.GetDBQuery()
 	if err != nil {
 		return GetStatsResult{}, err
 	}
 
-	yearMins, err := p.queries.AggregateYearHours(p.ctx, int64(1))
+	weekMins, err := queries.AggregateWeekHours(p.ctx, int64(1))
+	if err != nil {
+		return GetStatsResult{}, err
+	}
+	monthMins, err := queries.AggregateMonthHours(p.ctx, int64(1))
+	if err != nil {
+		return GetStatsResult{}, err
+	}
+
+	yearMins, err := queries.AggregateYearHours(p.ctx, int64(1))
 	if err != nil {
 		return GetStatsResult{}, err
 	}
@@ -62,10 +66,15 @@ func (p *progressService) GetStats() (GetStatsResult, error) {
 	}, nil
 }
 
-func (p *progressService) GetDailyTotalMinutes() ([]database.GetDailyTotalMinutesRow, error) {
-	return p.queries.GetDailyTotalMinutes(p.ctx)
+func (p *ProgressService) GetDailyTotalMinutes() ([]database.GetDailyTotalMinutesRow, error) {
+
+	queries, err := connection.GetDBQuery()
+	if err != nil {
+		return []database.GetDailyTotalMinutesRow{}, err
+	}
+	return queries.GetDailyTotalMinutes(p.ctx)
 }
 
-func (p *progressService) GetTotalExpForUser() (float64, error) {
+func (p *ProgressService) GetTotalExpForUser() (float64, error) {
 	return p.taskCompletionService.TotalUserExp(userId)
 }

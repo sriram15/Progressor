@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { GetAllSettings } from "@wailsjs/go/service/settingService";
+    import { GetAllSettings } from "@/services/service";
 
     let settingsPromise = $state(GetAllSettings());
 </script>

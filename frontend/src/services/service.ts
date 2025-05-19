@@ -11,13 +11,15 @@ import {
   StartCard,
   StopCard,
   GetActiveTimeEntry,
-} from "@wailsjs/go/service/cardService";
+} from "@bindings/github.com/sriram15/progressor-todo-app/internal/service/cardservice";
 
 import {
   GetStats,
   GetDailyTotalMinutes,
   GetTotalExpForUser,
-} from "@wailsjs/go/service/progressService";
+} from "@bindings/github.com/sriram15/progressor-todo-app/internal/service/progressservice";
+
+import { GetAllSettings } from "@bindings/github.com/sriram15/progressor-todo-app/internal/service/settingservice";
 
 export {
   GetAll,
@@ -33,4 +35,6 @@ export {
   GetStats,
   GetDailyTotalMinutes,
   GetTotalExpForUser,
+  /// ---- settingservice ---
+  GetAllSettings,
 };

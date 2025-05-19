@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+
+	"github.com/sriram15/progressor-todo-app/internal/database"
 )
 
 // DATABASE_NAME is the default name for the SQLite database file.
@@ -42,6 +44,17 @@ func OpenDB() (*sql.DB, error) {
 
 	fmt.Println("Database ready.")
 	return db, nil
+}
+
+func GetDBQuery() (*database.Queries, error) {
+
+	db, err := OpenDB()
+	if err != nil {
+		return nil, err
+	}
+
+	queries := database.New(db)
+	return queries, nil
 }
 
 func GetDBInfo() (string, string) {

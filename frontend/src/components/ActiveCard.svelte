@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { database } from "@wailsjs/go/models";
+    import type { ListCardsRow } from "@bindings_database";
     import { GetActiveTimeEntry } from "@/services/service";
     import { onMount } from "svelte";
     import { faClock } from "@fortawesome/free-solid-svg-icons";
@@ -7,7 +7,7 @@
 
     type ActiveCardProps = {
         projectId: number;
-        activeCard: database.ListCardsRow;
+        activeCard: ListCardsRow;
     };
 
     let { projectId, activeCard }: ActiveCardProps = $props();

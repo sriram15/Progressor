@@ -4,19 +4,19 @@ import (
 	"github.com/sriram15/progressor-todo-app/internal/connection"
 )
 
-type SettingService interface {
+type ISettingService interface {
 	GetAllSettings() (interface{}, error)
 	SetSetting(key, value string) error
 }
 
-type settingService struct {
+type SettingService struct {
 }
 
-func NewSettingService() SettingService {
-	return &settingService{}
+func NewSettingService() *SettingService {
+	return &SettingService{}
 }
 
-func (s *settingService) GetAllSettings() (interface{}, error) {
+func (s *SettingService) GetAllSettings() (interface{}, error) {
 
 	dbType, dbPath := connection.GetDBInfo()
 	settings := []interface{}{
@@ -25,10 +25,21 @@ func (s *settingService) GetAllSettings() (interface{}, error) {
 		map[string]string{"key": "shortcut_open", "value": "Ctrl + Shift + P", "display": "Shortcut - Open App"},
 	}
 
+	db, err := connection.OpenDB()
+	if err != nil {
+		return nil, err
+	}
+
+	cards, err := db.Query("SELECT * FROM Cards")
+	if err != nil {
+		return settings, err
+	}
+	defer cards.Close()
+
 	return settings, nil
 }
 
-func (s *settingService) SetSetting(key, value string) error {
+func (s *SettingService) SetSetting(key, value string) error {
 	// TODO: Implement saving to db
 	return nil
 }

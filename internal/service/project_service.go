@@ -1,17 +1,17 @@
 package service
 
-type ProjectService interface {
+type IProjectService interface {
 	IsValidProject(projectId uint) (bool, error)
 }
 
-type projectService struct {
+type ProjectService struct {
 }
 
-func NewProjectService() ProjectService {
-	return &projectService{}
+func NewProjectService() *ProjectService {
+	return &ProjectService{}
 }
 
-func (p *projectService) IsValidProject(projectId uint) (bool, error) {
+func (p *ProjectService) IsValidProject(projectId uint) (bool, error) {
 
 	// TODO: Access the DB adn validate the projectId
 	// Returning based ont he default project for now.

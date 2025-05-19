@@ -9,14 +9,16 @@
         DeleteCard,
         UpdateCardStatus,
         StartCard,
+        GetAll,
+        StopCard,
     } from "@/services/service";
     import { emitEvent, eventBus } from "@/stores/store";
     import { onMount } from "svelte";
     import { EVENTS } from "@/constants";
     import FixedSidebarPageLayout from "./layouts/FixedSidebarPageLayout.svelte";
-    import type { database } from "@wailsjs/go/models";
+    import type { database } from "@bindings/database";
+
     import EditCard from "@/components/EditCard.svelte";
-    import { GetAll, StopCard } from "@wailsjs/go/service/cardService";
     import ActiveCard from "@/components/ActiveCard.svelte";
     import StatsBar from "@/components/StatsBar.svelte";
     import ProjectViewFilter from "@/components/ProjectViewFilter.svelte";
