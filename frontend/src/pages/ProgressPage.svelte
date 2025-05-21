@@ -4,29 +4,37 @@
         GetTotalExpForUser,
     } from "@/services/service";
     import {
+        faArrowLeft,
+        faArrowRight,
+    } from "@fortawesome/free-solid-svg-icons";
+    import {
         eachDayOfInterval,
         format,
         endOfMonth,
         startOfMonth,
+        addMonths, // Add this
+        subMonths, // Add this
     } from "date-fns";
     import { onMount } from "svelte";
+    import Fa from "svelte-fa";
     import { fade } from "svelte/transition";
 
-    let { loading, data, error } = $state({
+    let { loading, error } = $state({
         loading: true,
-        data: null,
         error: "",
     });
 
     let totalExp = $state(0);
+    let apiData = $state([]); // apiData declared here
+    const today = new Date();
+    let currentDate = $state(today); // currentDate declared here
 
-    const year = new Date().getFullYear();
-    const month = new Date().getMonth();
-
-    const daysInMonth = eachDayOfInterval({
-        start: startOfMonth(new Date(year, month)),
-        end: endOfMonth(new Date(year, month)),
-    });
+    const daysInMonth = $derived(
+        eachDayOfInterval({
+            start: startOfMonth(currentDate),
+            end: endOfMonth(currentDate),
+        }),
+    );
 
     const verticalCount = 7;
     const rectSize = 50;
@@ -34,22 +42,28 @@
 
     let width = 500;
     let height = 400;
+
+    const data = $derived(
+        daysInMonth.map((day: any) => {
+            const compareDateFmt = format(day, "yyyy-MM-dd'T'00:00:00'Z'");
+            console.log(compareDateFmt);
+            // Ensure apiData is accessed correctly; it might be null initially or if API fails
+            const apiDataAt = (apiData || []).find(
+                (item) => item.date === compareDateFmt,
+            );
+
+            return {
+                date: format(day, "dd"),
+                value: apiDataAt?.total_minutes?.Float64 ?? 0,
+            };
+        }),
+    );
+
     onMount(async () => {
         try {
-            const apiData = await GetDailyTotalMinutes();
+            // apiData is now declared outside and assigned here
+            apiData = await GetDailyTotalMinutes();
             totalExp = await GetTotalExpForUser();
-
-            data = daysInMonth.map((day: any) => {
-                const compareDateFmt = format(day, "yyyy-MM-dd");
-                const apiDataAt = apiData.find(
-                    (item) => item.date === compareDateFmt,
-                );
-
-                return {
-                    date: format(day, "dd"),
-                    value: apiDataAt?.total_minutes?.Float64 ?? 0,
-                };
-            });
         } catch (ex) {
             console.log(ex);
             error = ex;
@@ -57,6 +71,14 @@
             loading = false;
         }
     });
+
+    function goToPreviousMonth() {
+        currentDate = subMonths(currentDate, 1);
+    }
+
+    function goToNextMonth() {
+        currentDate = addMonths(currentDate, 1);
+    }
 
     function showTooltip(value, x, y) {
         const tooltip = document.getElementById("tooltip");
@@ -74,15 +96,23 @@
 
 <div class="flex flex-col p-4 w-full">
     <div class="flex flex-row align-center justify-between">
-        <h3>{format(month, "MMMM")}</h3>
         <h3>Total Exp: {totalExp}</h3>
     </div>
     <div
         id="tooltip"
         style="position: absolute; display: none; background: white; border: 1px solid black; padding: 5px; border-radius: 5px;"
     ></div>
-    <div class="flex h-full justify-center items-center">
-        <div class="w-full h-full">
+    <div class="flex h-full items-center">
+        <div>
+            <div class="flex flex-row align-center justify-around">
+                <button class="btn btn-icon" onclick={goToPreviousMonth}
+                    ><Fa icon={faArrowLeft} /></button
+                >
+                <h2>{format(currentDate, "MMMM yyyy")}</h2>
+                <button class="btn btn-icon" onclick={goToNextMonth}
+                    ><Fa icon={faArrowRight} /></button
+                >
+            </div>
             <!-- profile chart</script> -->
             <svg {width} {height} style="max-width: 500px; min-width: 300px;">
                 <g class="boxes">
@@ -107,6 +137,10 @@
                             onblur={hideTooltip}
                             role="img"
                             aria-label={`Day ${point.date}, Minutes: ${point.value}`}
+                            class:progress-box-today={format(
+                                daysInMonth[i],
+                                "yyyy-MM-dd",
+                            ) === format(today, "yyyy-MM-dd")}
                         />
                         <rect
                             x={col * (rectSize + rectPadding) +
