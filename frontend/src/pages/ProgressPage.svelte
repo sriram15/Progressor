@@ -8,25 +8,27 @@
         format,
         endOfMonth,
         startOfMonth,
+        addMonths, // Add this
+        subMonths  // Add this
     } from "date-fns";
     import { onMount } from "svelte";
     import { fade } from "svelte/transition";
 
-    let { loading, data, error } = $state({
+    let { loading, error } = $state({ // data removed from here
         loading: true,
-        data: null,
         error: "",
     });
 
     let totalExp = $state(0);
+    let apiData = $state([]); // apiData declared here
+    let currentDate = $state(new Date()); // currentDate declared here
 
-    const year = new Date().getFullYear();
-    const month = new Date().getMonth();
+    // year and month constants removed
 
-    const daysInMonth = eachDayOfInterval({
-        start: startOfMonth(new Date(year, month)),
-        end: endOfMonth(new Date(year, month)),
-    });
+    const daysInMonth = $derived(eachDayOfInterval({
+        start: startOfMonth(currentDate),
+        end: endOfMonth(currentDate),
+    }));
 
     const verticalCount = 7;
     const rectSize = 50;
@@ -34,29 +36,40 @@
 
     let width = 500;
     let height = 400;
+
+    const data = $derived(daysInMonth.map((day: any) => {
+        const compareDateFmt = format(day, "yyyy-MM-dd");
+        // Ensure apiData is accessed correctly; it might be null initially or if API fails
+        const apiDataAt = (apiData || []).find( 
+            (item) => item.date === compareDateFmt,
+        );
+
+        return {
+            date: format(day, "dd"),
+            value: apiDataAt?.total_minutes?.Float64 ?? 0,
+        };
+    }));
+
     onMount(async () => {
         try {
-            const apiData = await GetDailyTotalMinutes();
+            // apiData is now declared outside and assigned here
+            apiData = await GetDailyTotalMinutes(); 
             totalExp = await GetTotalExpForUser();
-
-            data = daysInMonth.map((day: any) => {
-                const compareDateFmt = format(day, "yyyy-MM-dd");
-                const apiDataAt = apiData.find(
-                    (item) => item.date === compareDateFmt,
-                );
-
-                return {
-                    date: format(day, "dd"),
-                    value: apiDataAt?.total_minutes?.Float64 ?? 0,
-                };
-            });
-        } catch (ex) {
+        } catch (ex)
             console.log(ex);
             error = ex;
         } finally {
             loading = false;
         }
     });
+
+    function goToPreviousMonth() {
+        currentDate = subMonths(currentDate, 1);
+    }
+
+    function goToNextMonth() {
+        currentDate = addMonths(currentDate, 1);
+    }
 
     function showTooltip(value, x, y) {
         const tooltip = document.getElementById("tooltip");
@@ -74,7 +87,9 @@
 
 <div class="flex flex-col p-4 w-full">
     <div class="flex flex-row align-center justify-between">
-        <h3>{format(month, "MMMM")}</h3>
+        <button onclick={goToPreviousMonth} class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">- Prev</button>
+        <h3>{format(currentDate, "MMMM yyyy")}</h3>
+        <button onclick={goToNextMonth} class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Next +</button>
         <h3>Total Exp: {totalExp}</h3>
     </div>
     <div
