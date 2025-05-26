@@ -49,6 +49,18 @@ func OpenDB() (*sql.DB, error) {
 	return db, nil
 }
 
+// GetOrReconnectDB checks if the current db connection is alive, and if not, reopens it.
+func GetOrReconnectDB() (*sql.DB, error) {
+	if db != nil {
+		if err := db.Ping(); err == nil {
+			return db, nil
+		}
+		fmt.Println("DB connection lost, attempting to reconnect...")
+	}
+	// (Re)open the DB connection
+	return OpenDB()
+}
+
 func GetDBInfo() (string, string) {
 	return connector.GetDBInfo()
 }

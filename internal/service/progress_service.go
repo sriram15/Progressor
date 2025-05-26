@@ -4,6 +4,7 @@ import (
 	"context"
 	"math"
 
+	"github.com/sriram15/progressor-todo-app/internal/connection"
 	"github.com/sriram15/progressor-todo-app/internal/database"
 )
 
@@ -33,16 +34,21 @@ func NewProgressService(taskCompletionService ITaskCompletionService, queries *d
 }
 
 func (p *ProgressService) GetStats() (GetStatsResult, error) {
-	weekMins, err := p.queries.AggregateWeekHours(p.ctx, int64(1))
-	if err != nil {
-		return GetStatsResult{}, err
-	}
-	monthMins, err := p.queries.AggregateMonthHours(p.ctx, int64(1))
+	db, err := connection.GetOrReconnectDB()
 	if err != nil {
 		return GetStatsResult{}, err
 	}
 
-	yearMins, err := p.queries.AggregateYearHours(p.ctx, int64(1))
+	weekMins, err := p.queries.AggregateWeekHours(p.ctx, db, int64(1))
+	if err != nil {
+		return GetStatsResult{}, err
+	}
+	monthMins, err := p.queries.AggregateMonthHours(p.ctx, db, int64(1))
+	if err != nil {
+		return GetStatsResult{}, err
+	}
+
+	yearMins, err := p.queries.AggregateYearHours(p.ctx, db, int64(1))
 	if err != nil {
 		return GetStatsResult{}, err
 	}
@@ -60,7 +66,11 @@ func (p *ProgressService) GetStats() (GetStatsResult, error) {
 }
 
 func (p *ProgressService) GetDailyTotalMinutes() ([]database.GetDailyTotalMinutesRow, error) {
-	return p.queries.GetDailyTotalMinutes(p.ctx)
+	db, err := connection.GetOrReconnectDB()
+	if err != nil {
+		return nil, err
+	}
+	return p.queries.GetDailyTotalMinutes(p.ctx, db)
 }
 
 func (p *ProgressService) GetTotalExpForUser() (float64, error) {

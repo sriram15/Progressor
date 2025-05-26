@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 
+	"github.com/sriram15/progressor-todo-app/internal/connection"
 	"github.com/sriram15/progressor-todo-app/internal/database"
 )
 
@@ -29,7 +30,12 @@ func NewTaskCompletionService(queries *database.Queries) *TaskCompletionService 
 func (t *TaskCompletionService) CreateTaskCompletion(cardId int64, userId int64, baseExp int64, timeBonusExp int64, streakBonusExp int64) (database.TaskCompletion, error) {
 	totalExp := baseExp + timeBonusExp + streakBonusExp
 
-	taskValue, err := t.queries.CreateTaskCompletion(t.ctx, database.CreateTaskCompletionParams{
+	db, err := connection.GetOrReconnectDB()
+	if err != nil {
+		return database.TaskCompletion{}, err
+	}
+
+	taskValue, err := t.queries.CreateTaskCompletion(t.ctx, db, database.CreateTaskCompletionParams{
 		Cardid:         cardId,
 		Userid:         userId,
 		Baseexp:        baseExp,
@@ -47,7 +53,12 @@ func (t *TaskCompletionService) CreateTaskCompletion(cardId int64, userId int64,
 
 // GetTaskCompletion retrieves a TaskCompletion record using cardId and userId
 func (t *TaskCompletionService) GetTaskCompletion(cardId int64, userId int64) (database.TaskCompletion, error) {
-	taskCompletion, err := t.queries.GetTaskCompletion(t.ctx, database.GetTaskCompletionParams{
+	db, err := connection.GetOrReconnectDB()
+	if err != nil {
+		return database.TaskCompletion{}, err
+	}
+
+	taskCompletion, err := t.queries.GetTaskCompletion(t.ctx, db, database.GetTaskCompletionParams{
 		Cardid: cardId,
 		Userid: userId,
 	})
@@ -60,7 +71,12 @@ func (t *TaskCompletionService) GetTaskCompletion(cardId int64, userId int64) (d
 
 // ListTaskCompletionsByUser lists all task completions for a user
 func (t *TaskCompletionService) ListTaskCompletionsByUser(userId int64) ([]database.TaskCompletion, error) {
-	taskCompletions, err := t.queries.ListTaskCompletionsByUser(t.ctx, userId)
+	db, err := connection.GetOrReconnectDB()
+	if err != nil {
+		return nil, err
+	}
+
+	taskCompletions, err := t.queries.ListTaskCompletionsByUser(t.ctx, db, userId)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +86,12 @@ func (t *TaskCompletionService) ListTaskCompletionsByUser(userId int64) ([]datab
 
 // TotalUserExp calculates total user exp
 func (t *TaskCompletionService) TotalUserExp(userId int64) (float64, error) {
-	totalExp, err := t.queries.TotalUserExp(t.ctx, userId)
+	db, err := connection.GetOrReconnectDB()
+	if err != nil {
+		return 0, err
+	}
+
+	totalExp, err := t.queries.TotalUserExp(t.ctx, db, userId)
 	if err != nil {
 		return 0, err
 	}

@@ -30,13 +30,13 @@ func main() {
 		log.Println("No .env file found or error loading .env file (this may be normal if env vars are set externally):", err)
 	}
 
-	db, err := connection.OpenDB()
+	_, err := connection.OpenDB()
 	if err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
 	// defer db.Close()
 
-	queries := database.New(db)
+	queries := database.New()
 
 	projectService := service.NewProjectService()
 	taskCompletionService := service.NewTaskCompletionService(queries)
