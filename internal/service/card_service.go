@@ -54,13 +54,15 @@ type CardService struct {
 	ctx                   context.Context
 	projectService        IProjectService
 	taskCompletionService ITaskCompletionService
+	queries               *database.Queries
 }
 
-func NewCardService(projectService IProjectService, taskCompletionService ITaskCompletionService) *CardService {
+func NewCardService(projectService IProjectService, taskCompletionService ITaskCompletionService, queries *database.Queries) *CardService {
 	return &CardService{
 		ctx:                   context.Background(),
 		projectService:        projectService,
 		taskCompletionService: taskCompletionService,
+		queries:               queries,
 	}
 }
 
@@ -76,12 +78,7 @@ func (c *CardService) GetAll(projectId uint, status CardStatus) ([]database.List
 	// 	return []database.ListCardsRow{}, ErrInvalidStatus
 	// }
 
-	queries, err := connection.GetDBQuery()
-	if err != nil {
-		return nil, err
-	}
-
-	cards, err := queries.ListCards(c.ctx, database.ListCardsParams{Projectid: int64(projectId), Status: int64(status)})
+	cards, err := c.queries.ListCards(c.ctx, database.ListCardsParams{Projectid: int64(projectId), Status: int64(status)})
 	return cards, err
 }
 
@@ -91,12 +88,7 @@ func (c *CardService) GetCardById(projectId uint, id uint) (database.GetCardRow,
 		return database.GetCardRow{}, err
 	}
 
-	queries, err := connection.GetDBQuery()
-	if err != nil {
-		return database.GetCardRow{}, err
-	}
-
-	card, err := queries.GetCard(c.ctx, database.GetCardParams{
+	card, err := c.queries.GetCard(c.ctx, database.GetCardParams{
 		ID:        int64(id),
 		Projectid: int64(projectId),
 	})
@@ -113,12 +105,7 @@ func (c *CardService) GetActiveTimeEntry(projectId uint, id uint) (database.Time
 		return database.TimeEntry{}, err
 	}
 
-	queries, err := connection.GetDBQuery()
-	if err != nil {
-		return database.TimeEntry{}, err
-	}
-
-	timeEntry, err := queries.GetActiveTimeEntry(c.ctx, int64(id))
+	timeEntry, err := c.queries.GetActiveTimeEntry(c.ctx, int64(id))
 	if err != nil {
 		return database.TimeEntry{}, err
 	}
@@ -133,12 +120,7 @@ func (c *CardService) DeleteCard(projectId uint, id uint) error {
 		return err
 	}
 
-	queries, err := connection.GetDBQuery()
-	if err != nil {
-		return err
-	}
-
-	return queries.DeleteCard(c.ctx, database.DeleteCardParams{
+	return c.queries.DeleteCard(c.ctx, database.DeleteCardParams{
 		ID:        int64(id),
 		Projectid: int64(projectId),
 	})
@@ -151,11 +133,7 @@ func (c *CardService) UpdateCard(projectId uint, id uint, updateCardParam Update
 		return err
 	}
 
-	queries, err := connection.GetDBQuery()
-	if err != nil {
-		return err
-	}
-	card, err := queries.GetCard(c.ctx, database.GetCardParams{
+	card, err := c.queries.GetCard(c.ctx, database.GetCardParams{
 		ID:        int64(id),
 		Projectid: int64(projectId),
 	})
@@ -175,7 +153,7 @@ func (c *CardService) UpdateCard(projectId uint, id uint, updateCardParam Update
 		description = sql.NullString{Valid: true, String: updateCardParam.Description}
 	}
 
-	return queries.UpdateCard(c.ctx, database.UpdateCardParams{
+	return c.queries.UpdateCard(c.ctx, database.UpdateCardParams{
 		Title:         updateCardParam.Title,
 		Description:   description,
 		ID:            card.CardID,
@@ -203,11 +181,7 @@ func (c *CardService) UpdateCardStatus(projectId uint, id uint, status CardStatu
 	}
 	defer tx.Rollback()
 
-	queries, err := connection.GetDBQuery()
-	if err != nil {
-		return err
-	}
-	qtx := queries.WithTx(tx)
+	qtx := c.queries.WithTx(tx)
 
 	card, err := qtx.GetCard(c.ctx, database.GetCardParams{
 		ID:        int64(id),
@@ -282,11 +256,7 @@ func (c *CardService) AddCard(projectId uint, cardTitle string, estimatedMins ui
 		Projectid:     int64(projectId),
 		Estimatedmins: int64(estimatedMins),
 	}
-	queries, err := connection.GetDBQuery()
-	if err != nil {
-		return err
-	}
-	return queries.CreateCard(c.ctx, card)
+	return c.queries.CreateCard(c.ctx, card)
 }
 
 func (c *CardService) StartCard(projectId uint, id uint) error {
@@ -295,11 +265,7 @@ func (c *CardService) StartCard(projectId uint, id uint) error {
 		return err
 	}
 
-	queries, err := connection.GetDBQuery()
-	if err != nil {
-		return err
-	}
-	card, err := queries.GetCard(c.ctx, database.GetCardParams{
+	card, err := c.queries.GetCard(c.ctx, database.GetCardParams{
 		ID:        int64(id),
 		Projectid: int64(projectId),
 	})
@@ -313,7 +279,7 @@ func (c *CardService) StartCard(projectId uint, id uint) error {
 	}
 
 	// Check for other open cards which is currently in progress and stop the timer there
-	activeCard, err := queries.GetActiveCard(c.ctx)
+	activeCard, err := c.queries.GetActiveCard(c.ctx)
 
 	// When the active card is empty. It will throw sql.ErrNoRows. If the err is not that, then return err
 	if err != nil {
@@ -337,7 +303,7 @@ func (c *CardService) StartCard(projectId uint, id uint) error {
 		return err
 	}
 	defer tx.Rollback()
-	qtx := queries.WithTx(tx)
+	qtx := c.queries.WithTx(tx)
 
 	err = qtx.UpdateCardActive(c.ctx, database.UpdateCardActiveParams{
 		ID:          int64(id),
@@ -368,11 +334,7 @@ func (c *CardService) StopCard(projectId uint, id uint) error {
 		return err
 	}
 
-	queries, err := connection.GetDBQuery()
-	if err != nil {
-		return err
-	}
-	card, err := queries.GetCard(c.ctx, database.GetCardParams{
+	card, err := c.queries.GetCard(c.ctx, database.GetCardParams{
 		ID:        int64(id),
 		Projectid: int64(projectId),
 	})
@@ -395,7 +357,7 @@ func (c *CardService) StopCard(projectId uint, id uint) error {
 		return err
 	}
 	defer tx.Rollback()
-	qtx := queries.WithTx(tx)
+	qtx := c.queries.WithTx(tx)
 
 	// Get the active time entry
 	activeTimeentry, err := qtx.GetActiveTimeEntry(c.ctx, int64(id))
@@ -429,11 +391,7 @@ func (c *CardService) StopCard(projectId uint, id uint) error {
 func (c *CardService) Cleanup() error {
 
 	// Check for other open cards which is currently in progress and stop the timer there
-	queries, err := connection.GetDBQuery()
-	if err != nil {
-		return err
-	}
-	activeCard, err := queries.GetActiveCard(c.ctx)
+	activeCard, err := c.queries.GetActiveCard(c.ctx)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil

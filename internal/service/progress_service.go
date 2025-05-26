@@ -4,7 +4,6 @@ import (
 	"context"
 	"math"
 
-	"github.com/sriram15/progressor-todo-app/internal/connection"
 	"github.com/sriram15/progressor-todo-app/internal/database"
 )
 
@@ -22,39 +21,33 @@ type IProgressService interface {
 type ProgressService struct {
 	ctx                   context.Context
 	taskCompletionService ITaskCompletionService
+	queries               *database.Queries
 }
 
-func NewProgressService(taskCompletionService ITaskCompletionService) *ProgressService {
+func NewProgressService(taskCompletionService ITaskCompletionService, queries *database.Queries) *ProgressService {
 	return &ProgressService{
 		ctx:                   context.Background(),
 		taskCompletionService: taskCompletionService,
+		queries:               queries,
 	}
-
 }
 
 func (p *ProgressService) GetStats() (GetStatsResult, error) {
-
-	queries, err := connection.GetDBQuery()
+	weekMins, err := p.queries.AggregateWeekHours(p.ctx, int64(1))
+	if err != nil {
+		return GetStatsResult{}, err
+	}
+	monthMins, err := p.queries.AggregateMonthHours(p.ctx, int64(1))
 	if err != nil {
 		return GetStatsResult{}, err
 	}
 
-	weekMins, err := queries.AggregateWeekHours(p.ctx, int64(1))
-	if err != nil {
-		return GetStatsResult{}, err
-	}
-	monthMins, err := queries.AggregateMonthHours(p.ctx, int64(1))
-	if err != nil {
-		return GetStatsResult{}, err
-	}
-
-	yearMins, err := queries.AggregateYearHours(p.ctx, int64(1))
+	yearMins, err := p.queries.AggregateYearHours(p.ctx, int64(1))
 	if err != nil {
 		return GetStatsResult{}, err
 	}
 
 	// Convert to hours from mins
-
 	weekHours := math.Ceil(weekMins / 60.0)
 	monthHours := math.Ceil(monthMins / 60.0)
 	yearHours := math.Ceil(yearMins / 60.0)
@@ -67,12 +60,7 @@ func (p *ProgressService) GetStats() (GetStatsResult, error) {
 }
 
 func (p *ProgressService) GetDailyTotalMinutes() ([]database.GetDailyTotalMinutesRow, error) {
-
-	queries, err := connection.GetDBQuery()
-	if err != nil {
-		return []database.GetDailyTotalMinutesRow{}, err
-	}
-	return queries.GetDailyTotalMinutes(p.ctx)
+	return p.queries.GetDailyTotalMinutes(p.ctx)
 }
 
 func (p *ProgressService) GetTotalExpForUser() (float64, error) {

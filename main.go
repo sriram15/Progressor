@@ -8,6 +8,7 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/sriram15/progressor-todo-app/internal/connection"
+	"github.com/sriram15/progressor-todo-app/internal/database"
 	"github.com/sriram15/progressor-todo-app/internal/service"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
@@ -29,16 +30,18 @@ func main() {
 		log.Println("No .env file found or error loading .env file (this may be normal if env vars are set externally):", err)
 	}
 
-	_, err := connection.OpenDB()
+	db, err := connection.OpenDB()
 	if err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
 	// defer db.Close()
 
+	queries := database.New(db)
+
 	projectService := service.NewProjectService()
-	taskCompletionService := service.NewTaskCompletionService()
-	cardService := service.NewCardService(projectService, taskCompletionService)
-	progressService := service.NewProgressService(taskCompletionService)
+	taskCompletionService := service.NewTaskCompletionService(queries)
+	cardService := service.NewCardService(projectService, taskCompletionService, queries)
+	progressService := service.NewProgressService(taskCompletionService, queries)
 	settingsService := service.NewSettingService()
 	// shortcuts := internal.NewShortcut()
 
