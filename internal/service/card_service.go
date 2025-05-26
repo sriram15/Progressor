@@ -193,7 +193,7 @@ func (c *CardService) UpdateCardStatus(projectId uint, id uint, status CardStatu
 	}
 
 	db, err := connection.OpenDB()
-	if db != nil {
+	if err != nil {
 		return err
 	}
 
