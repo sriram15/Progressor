@@ -30,7 +30,7 @@ func main() {
 		log.Println("No .env file found or error loading .env file (this may be normal if env vars are set externally):", err)
 	}
 
-	_, err := connection.OpenDB()
+	err := connection.InitDB()
 	if err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
@@ -72,7 +72,7 @@ func main() {
 	// 'BackgroundColour' is the background colour of the window.
 	// 'URL' is the URL that will be loaded into the webview.
 	app.NewWebviewWindowWithOptions(application.WebviewWindowOptions{
-		Title: "Window 1",
+		Title: "Progressor",
 		Mac: application.MacWindow{
 			InvisibleTitleBarHeight: 50,
 			Backdrop:                application.MacBackdropTranslucent,

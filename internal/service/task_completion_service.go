@@ -30,10 +30,8 @@ func NewTaskCompletionService(queries *database.Queries) *TaskCompletionService 
 func (t *TaskCompletionService) CreateTaskCompletion(cardId int64, userId int64, baseExp int64, timeBonusExp int64, streakBonusExp int64) (database.TaskCompletion, error) {
 	totalExp := baseExp + timeBonusExp + streakBonusExp
 
-	db, err := connection.GetOrReconnectDB()
-	if err != nil {
-		return database.TaskCompletion{}, err
-	}
+	db, unlock := connection.GetDB()
+	defer unlock()
 
 	taskValue, err := t.queries.CreateTaskCompletion(t.ctx, db, database.CreateTaskCompletionParams{
 		Cardid:         cardId,
@@ -53,10 +51,8 @@ func (t *TaskCompletionService) CreateTaskCompletion(cardId int64, userId int64,
 
 // GetTaskCompletion retrieves a TaskCompletion record using cardId and userId
 func (t *TaskCompletionService) GetTaskCompletion(cardId int64, userId int64) (database.TaskCompletion, error) {
-	db, err := connection.GetOrReconnectDB()
-	if err != nil {
-		return database.TaskCompletion{}, err
-	}
+	db, unlock := connection.GetDB()
+	defer unlock()
 
 	taskCompletion, err := t.queries.GetTaskCompletion(t.ctx, db, database.GetTaskCompletionParams{
 		Cardid: cardId,
@@ -71,10 +67,8 @@ func (t *TaskCompletionService) GetTaskCompletion(cardId int64, userId int64) (d
 
 // ListTaskCompletionsByUser lists all task completions for a user
 func (t *TaskCompletionService) ListTaskCompletionsByUser(userId int64) ([]database.TaskCompletion, error) {
-	db, err := connection.GetOrReconnectDB()
-	if err != nil {
-		return nil, err
-	}
+	db, unlock := connection.GetDB()
+	defer unlock()
 
 	taskCompletions, err := t.queries.ListTaskCompletionsByUser(t.ctx, db, userId)
 	if err != nil {
@@ -86,10 +80,8 @@ func (t *TaskCompletionService) ListTaskCompletionsByUser(userId int64) ([]datab
 
 // TotalUserExp calculates total user exp
 func (t *TaskCompletionService) TotalUserExp(userId int64) (float64, error) {
-	db, err := connection.GetOrReconnectDB()
-	if err != nil {
-		return 0, err
-	}
+	db, unlock := connection.GetDB()
+	defer unlock()
 
 	totalExp, err := t.queries.TotalUserExp(t.ctx, db, userId)
 	if err != nil {

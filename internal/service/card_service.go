@@ -78,10 +78,9 @@ func (c *CardService) GetAll(projectId uint, status CardStatus) ([]database.List
 	// 	return []database.ListCardsRow{}, ErrInvalidStatus
 	// }
 
-	db, err := connection.GetOrReconnectDB()
-	if err != nil {
-		return nil, err
-	}
+	db, unlock := connection.GetDB()
+	defer unlock()
+
 	cards, err := c.queries.ListCards(c.ctx, db, database.ListCardsParams{Projectid: int64(projectId), Status: int64(status)})
 	return cards, err
 }
@@ -92,10 +91,9 @@ func (c *CardService) GetCardById(projectId uint, id uint) (database.GetCardRow,
 		return database.GetCardRow{}, err
 	}
 
-	db, err := connection.GetOrReconnectDB()
-	if err != nil {
-		return database.GetCardRow{}, err
-	}
+	db, unlock := connection.GetDB()
+	defer unlock()
+
 	card, err := c.queries.GetCard(c.ctx, db, database.GetCardParams{
 		ID:        int64(id),
 		Projectid: int64(projectId),
@@ -113,10 +111,9 @@ func (c *CardService) GetActiveTimeEntry(projectId uint, id uint) (database.Time
 		return database.TimeEntry{}, err
 	}
 
-	db, err := connection.GetOrReconnectDB()
-	if err != nil {
-		return database.TimeEntry{}, err
-	}
+	db, unlock := connection.GetDB()
+	defer unlock()
+
 	timeEntry, err := c.queries.GetActiveTimeEntry(c.ctx, db, int64(id))
 	if err != nil {
 		return database.TimeEntry{}, err
@@ -125,6 +122,7 @@ func (c *CardService) GetActiveTimeEntry(projectId uint, id uint) (database.Time
 	return timeEntry, nil
 
 }
+
 func (c *CardService) DeleteCard(projectId uint, id uint) error {
 
 	_, err := c.projectService.IsValidProject(projectId)
@@ -132,10 +130,9 @@ func (c *CardService) DeleteCard(projectId uint, id uint) error {
 		return err
 	}
 
-	db, err := connection.GetOrReconnectDB()
-	if err != nil {
-		return err
-	}
+	db, unlock := connection.GetDB()
+	defer unlock()
+
 	return c.queries.DeleteCard(c.ctx, db, database.DeleteCardParams{
 		ID:        int64(id),
 		Projectid: int64(projectId),
@@ -149,10 +146,9 @@ func (c *CardService) UpdateCard(projectId uint, id uint, updateCardParam Update
 		return err
 	}
 
-	db, err := connection.GetOrReconnectDB()
-	if err != nil {
-		return err
-	}
+	db, unlock := connection.GetDB()
+	defer unlock()
+
 	card, err := c.queries.GetCard(c.ctx, db, database.GetCardParams{
 		ID:        int64(id),
 		Projectid: int64(projectId),
@@ -190,10 +186,9 @@ func (c *CardService) UpdateCardStatus(projectId uint, id uint, status CardStatu
 		return err
 	}
 
-	db, err := connection.GetOrReconnectDB()
-	if err != nil {
-		return err
-	}
+	db, unlock := connection.GetDB()
+	defer unlock()
+
 	tx, err := db.Begin()
 	if err != nil {
 		return err
@@ -273,10 +268,8 @@ func (c *CardService) AddCard(projectId uint, cardTitle string, estimatedMins ui
 		Projectid:     int64(projectId),
 		Estimatedmins: int64(estimatedMins),
 	}
-	db, err := connection.GetOrReconnectDB()
-	if err != nil {
-		return err
-	}
+	db, unlock := connection.GetDB()
+	defer unlock()
 
 	return c.queries.CreateCard(c.ctx, db, card)
 }
@@ -287,10 +280,9 @@ func (c *CardService) StartCard(projectId uint, id uint) error {
 		return err
 	}
 
-	db, err := connection.GetOrReconnectDB()
-	if err != nil {
-		return err
-	}
+	db, unlock := connection.GetDB()
+	defer unlock()
+
 	card, err := c.queries.GetCard(c.ctx, db, database.GetCardParams{
 		ID:        int64(id),
 		Projectid: int64(projectId),
@@ -354,10 +346,9 @@ func (c *CardService) StopCard(projectId uint, id uint) error {
 		return err
 	}
 
-	db, err := connection.GetOrReconnectDB()
-	if err != nil {
-		return err
-	}
+	db, unlock := connection.GetDB()
+	defer unlock()
+
 	card, err := c.queries.GetCard(c.ctx, db, database.GetCardParams{
 		ID:        int64(id),
 		Projectid: int64(projectId),

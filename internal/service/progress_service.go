@@ -34,10 +34,8 @@ func NewProgressService(taskCompletionService ITaskCompletionService, queries *d
 }
 
 func (p *ProgressService) GetStats() (GetStatsResult, error) {
-	db, err := connection.GetOrReconnectDB()
-	if err != nil {
-		return GetStatsResult{}, err
-	}
+	db, unlock := connection.GetDB()
+	defer unlock()
 
 	weekMins, err := p.queries.AggregateWeekHours(p.ctx, db, int64(1))
 	if err != nil {
@@ -66,10 +64,8 @@ func (p *ProgressService) GetStats() (GetStatsResult, error) {
 }
 
 func (p *ProgressService) GetDailyTotalMinutes() ([]database.GetDailyTotalMinutesRow, error) {
-	db, err := connection.GetOrReconnectDB()
-	if err != nil {
-		return nil, err
-	}
+	db, unlock := connection.GetDB()
+	defer unlock()
 	return p.queries.GetDailyTotalMinutes(p.ctx, db)
 }
 
