@@ -52,8 +52,6 @@ func (tc *TursoConnector) Connect() (*sql.DB, string, error) {
 	}
 	defer connector.Close()
 
-	tc.loggableURL = ""
-
 	tursoDb := sql.OpenDB(connector)
 
 	if err := tursoDb.Ping(); err != nil {
@@ -61,6 +59,7 @@ func (tc *TursoConnector) Connect() (*sql.DB, string, error) {
 	}
 	// defer tursoDb.Close()
 
+	tc.loggableURL = tursoDbPath
 	return tursoDb, DBTypeTurso, nil
 }
 

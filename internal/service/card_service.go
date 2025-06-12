@@ -400,10 +400,8 @@ func (c *CardService) StopCard(projectId uint, id uint) error {
 func (c *CardService) Cleanup() error {
 
 	// Check for other open cards which is currently in progress and stop the timer there
-	db, err := connection.GetOrReconnectDB()
-	if err != nil {
-		return err
-	}
+	db, unlock := connection.GetDB()
+	defer unlock()
 
 	activeCard, err := c.queries.GetActiveCard(c.ctx, db)
 	if err != nil {
