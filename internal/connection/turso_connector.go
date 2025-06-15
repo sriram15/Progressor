@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/pressly/goose/v3"
+	"github.com/sriram15/progressor-todo-app/internal"
 	libsql "github.com/tursodatabase/go-libsql"
 )
 
@@ -24,27 +25,32 @@ func NewTursoConnector() DBConnector {
 func (tc *TursoConnector) Connect() (*sql.DB, string, error) {
 	tursoDbPath := os.Getenv("TURSO_DB_PATH")
 	authToken := os.Getenv("TURSO_AUTH_TOKEN")
-	// _ := os.Getenv("TURSO_ENCRYPTION_KEY")
+	encryptionKey := os.Getenv("TURSO_ENCRYPTION_KEY")
 	dbReplicaName := "progressor-replica.db"
 
 	if tursoDbPath == "" || authToken == "" {
 		return nil, DBTypeTurso, fmt.Errorf("TURSO_DB_PATH, TURSO_AUTH_TOKEN must be set in the environment or .env file for embedded replica mode")
 	}
 
-	dir, err := os.MkdirTemp("", "libsql-*")
+	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		fmt.Println("Error creating temporary directory:", err)
-		os.Exit(1)
+		fmt.Println("Error creating using the home directory for replica:", err)
+		return nil, DBTypeTurso, err
 	}
-	defer os.RemoveAll(dir)
 
-	dbPath := filepath.Join(dir, dbReplicaName)
+	dbDir := filepath.Join(homeDir, fmt.Sprintf(".%s", internal.APP_NAME))
+	if err := os.MkdirAll(dbDir, 0755); err != nil {
+		fmt.Errorf("Could not create database directory at %s: %v", dbDir, err)
+		return nil, DBTypeTurso, err
+	}
 
-	fmt.Println("Created a local temp replica")
+	dbPath := filepath.Join(dbDir, dbReplicaName)
+
+	fmt.Printf("Created a local temp replica at: %s\n", dbPath)
 
 	connector, err := libsql.NewEmbeddedReplicaConnector(dbPath, tursoDbPath,
 		libsql.WithAuthToken(authToken),
-		// libsql.WithEncryption(encryptionKey),
+		libsql.WithEncryption(encryptionKey),
 	)
 	if err != nil {
 		fmt.Println("Error creating connector:", err)
