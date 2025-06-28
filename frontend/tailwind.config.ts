@@ -17,7 +17,12 @@ const config = {
     ),
   ],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        positive: '#22c55e',
+        negative: '#ef4444',
+      },
+    },
   },
   plugins: [
     // 4. Append the Skeleton plugin (after other plugins)

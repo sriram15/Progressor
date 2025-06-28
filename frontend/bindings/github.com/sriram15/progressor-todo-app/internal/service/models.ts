@@ -17,20 +17,24 @@ export enum CardStatus {
 };
 
 export class GetStatsResult {
-    "weekHrs": number;
-    "monthHrs": number;
-    "yearHrs": number;
+    "weekHrs": StatCardData;
+    "monthHrs": StatCardData;
+    "weekProgress": StatCardData;
+    "monthProgress": StatCardData;
 
     /** Creates a new GetStatsResult instance. */
     constructor($$source: Partial<GetStatsResult> = {}) {
         if (!("weekHrs" in $$source)) {
-            this["weekHrs"] = 0;
+            this["weekHrs"] = (new StatCardData());
         }
         if (!("monthHrs" in $$source)) {
-            this["monthHrs"] = 0;
+            this["monthHrs"] = (new StatCardData());
         }
-        if (!("yearHrs" in $$source)) {
-            this["yearHrs"] = 0;
+        if (!("weekProgress" in $$source)) {
+            this["weekProgress"] = (new StatCardData());
+        }
+        if (!("monthProgress" in $$source)) {
+            this["monthProgress"] = (new StatCardData());
         }
 
         Object.assign(this, $$source);
@@ -40,8 +44,49 @@ export class GetStatsResult {
      * Creates a new GetStatsResult instance from a string or object.
      */
     static createFrom($$source: any = {}): GetStatsResult {
+        const $$createField0_0 = $$createType0;
+        const $$createField1_0 = $$createType0;
+        const $$createField2_0 = $$createType0;
+        const $$createField3_0 = $$createType0;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("weekHrs" in $$parsedSource) {
+            $$parsedSource["weekHrs"] = $$createField0_0($$parsedSource["weekHrs"]);
+        }
+        if ("monthHrs" in $$parsedSource) {
+            $$parsedSource["monthHrs"] = $$createField1_0($$parsedSource["monthHrs"]);
+        }
+        if ("weekProgress" in $$parsedSource) {
+            $$parsedSource["weekProgress"] = $$createField2_0($$parsedSource["weekProgress"]);
+        }
+        if ("monthProgress" in $$parsedSource) {
+            $$parsedSource["monthProgress"] = $$createField3_0($$parsedSource["monthProgress"]);
+        }
         return new GetStatsResult($$parsedSource as Partial<GetStatsResult>);
+    }
+}
+
+export class StatCardData {
+    "value": number;
+    "prevValue": number;
+
+    /** Creates a new StatCardData instance. */
+    constructor($$source: Partial<StatCardData> = {}) {
+        if (!("value" in $$source)) {
+            this["value"] = 0;
+        }
+        if (!("prevValue" in $$source)) {
+            this["prevValue"] = 0;
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new StatCardData instance from a string or object.
+     */
+    static createFrom($$source: any = {}): StatCardData {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new StatCardData($$parsedSource as Partial<StatCardData>);
     }
 }
 
@@ -73,3 +118,6 @@ export class UpdateCardParams {
         return new UpdateCardParams($$parsedSource as Partial<UpdateCardParams>);
     }
 }
+
+// Private type creation functions
+const $$createType0 = StatCardData.createFrom;

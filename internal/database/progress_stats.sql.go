@@ -26,6 +26,38 @@ func (q *Queries) AggregateMonthHours(ctx context.Context, db DBTX, id int64) (f
 	return totaltrackedminscurrentmonth, err
 }
 
+const aggregatePreviousMonthHours = `-- name: AggregatePreviousMonthHours :one
+SELECT CAST(IFNULL(SUM(te.duration), 0) AS FLOAT) AS totalTrackedMinsPreviousMonth
+FROM TimeEntries te
+JOIN Cards c ON te.cardId = c.id
+JOIN Projects p ON c.projectId = p.id
+WHERE p.id = ?
+AND strftime('%Y-%m', te.startTime) = strftime('%Y-%m', 'now', 'start of month', '-1 month')
+`
+
+func (q *Queries) AggregatePreviousMonthHours(ctx context.Context, db DBTX, id int64) (float64, error) {
+	row := db.QueryRowContext(ctx, aggregatePreviousMonthHours, id)
+	var totaltrackedminspreviousmonth float64
+	err := row.Scan(&totaltrackedminspreviousmonth)
+	return totaltrackedminspreviousmonth, err
+}
+
+const aggregatePreviousWeekHours = `-- name: AggregatePreviousWeekHours :one
+SELECT CAST(IFNULL(SUM(te.duration), 0) AS FLOAT) AS totalTrackedMinsPreviousWeek
+FROM TimeEntries te
+JOIN Cards c ON te.cardId = c.id
+JOIN Projects p ON c.projectId = p.id
+WHERE p.id = ?
+AND strftime('%Y-%W', te.startTime) = strftime('%Y-%W', 'now', '-7 days')
+`
+
+func (q *Queries) AggregatePreviousWeekHours(ctx context.Context, db DBTX, id int64) (float64, error) {
+	row := db.QueryRowContext(ctx, aggregatePreviousWeekHours, id)
+	var totaltrackedminspreviousweek float64
+	err := row.Scan(&totaltrackedminspreviousweek)
+	return totaltrackedminspreviousweek, err
+}
+
 const aggregateWeekHours = `-- name: AggregateWeekHours :one
 SELECT CAST(IFNULL(SUM(te.duration), 0) AS FLOAT) AS totalTrackedMinsCurrentWeek
 FROM TimeEntries te
@@ -42,33 +74,17 @@ func (q *Queries) AggregateWeekHours(ctx context.Context, db DBTX, id int64) (fl
 	return totaltrackedminscurrentweek, err
 }
 
-const aggregateYearHours = `-- name: AggregateYearHours :one
-SELECT CAST(IFNULL(SUM(te.duration), 0) AS FLOAT) AS totalTrackedMinsCurrentYear
-FROM TimeEntries te
-JOIN Cards c ON te.cardId = c.id
-JOIN Projects p ON c.projectId = p.id
-WHERE p.id = ?
-AND strftime('%Y', te.startTime) = strftime('%Y', 'now')
-`
-
-func (q *Queries) AggregateYearHours(ctx context.Context, db DBTX, id int64) (float64, error) {
-	row := db.QueryRowContext(ctx, aggregateYearHours, id)
-	var totaltrackedminscurrentyear float64
-	err := row.Scan(&totaltrackedminscurrentyear)
-	return totaltrackedminscurrentyear, err
-}
-
 const getDailyTotalMinutes = `-- name: GetDailyTotalMinutes :many
-SELECT 
+SELECT
     DATE(startTime) AS date,
     SUM(duration) AS total_minutes
-FROM 
+FROM
     TimeEntries
-WHERE 
+WHERE
     startTime >= DATE('now', '-1 year')
-GROUP BY 
+GROUP BY
     DATE(startTime)
-ORDER BY 
+ORDER BY
     DATE(startTime)
 `
 
@@ -98,4 +114,56 @@ func (q *Queries) GetDailyTotalMinutes(ctx context.Context, db DBTX) ([]GetDaily
 		return nil, err
 	}
 	return items, nil
+}
+
+const getMonthlyProgress = `-- name: GetMonthlyProgress :one
+SELECT COUNT(DISTINCT DATE(startTime)) AS progress_days
+FROM TimeEntries
+WHERE strftime('%Y-%m', startTime) = strftime('%Y-%m', 'now')
+`
+
+func (q *Queries) GetMonthlyProgress(ctx context.Context, db DBTX) (int64, error) {
+	row := db.QueryRowContext(ctx, getMonthlyProgress)
+	var progress_days int64
+	err := row.Scan(&progress_days)
+	return progress_days, err
+}
+
+const getPreviousMonthlyProgress = `-- name: GetPreviousMonthlyProgress :one
+SELECT COUNT(DISTINCT DATE(startTime)) AS progress_days
+FROM TimeEntries
+WHERE strftime('%Y-%m', startTime) = strftime('%Y-%m', 'now', 'start of month', '-1 month')
+`
+
+func (q *Queries) GetPreviousMonthlyProgress(ctx context.Context, db DBTX) (int64, error) {
+	row := db.QueryRowContext(ctx, getPreviousMonthlyProgress)
+	var progress_days int64
+	err := row.Scan(&progress_days)
+	return progress_days, err
+}
+
+const getPreviousWeeklyProgress = `-- name: GetPreviousWeeklyProgress :one
+SELECT COUNT(DISTINCT DATE(startTime)) AS progress_days
+FROM TimeEntries
+WHERE strftime('%Y-%W', startTime) = strftime('%Y-%W', 'now', '-7 days')
+`
+
+func (q *Queries) GetPreviousWeeklyProgress(ctx context.Context, db DBTX) (int64, error) {
+	row := db.QueryRowContext(ctx, getPreviousWeeklyProgress)
+	var progress_days int64
+	err := row.Scan(&progress_days)
+	return progress_days, err
+}
+
+const getWeeklyProgress = `-- name: GetWeeklyProgress :one
+SELECT COUNT(DISTINCT DATE(startTime)) AS progress_days
+FROM TimeEntries
+WHERE strftime('%Y-%W', startTime) = strftime('%Y-%W', 'now')
+`
+
+func (q *Queries) GetWeeklyProgress(ctx context.Context, db DBTX) (int64, error) {
+	row := db.QueryRowContext(ctx, getWeeklyProgress)
+	var progress_days int64
+	err := row.Scan(&progress_days)
+	return progress_days, err
 }
