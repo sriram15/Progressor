@@ -21,6 +21,17 @@ import {
 
 import { GetAllSettings } from "@bindings/github.com/sriram15/progressor-todo-app/internal/service/settingservice";
 
+import {
+  CreateSkill,
+  GetSkillByID,
+  GetSkillsByUserID,
+  UpdateSkill,
+  DeleteSkill,
+  GetUserSkillProgress,
+} from "@bindings/github.com/sriram15/progressor-todo-app/internal/service/skillservice";
+
+import { GetProjects, GetSkillsForProject, AddProjectSkill, RemoveProjectSkill } from "@bindings/github.com/sriram15/progressor-todo-app/internal/service/projectservice";
+
 export {
   GetAll,
   GetCardById,
@@ -37,4 +48,16 @@ export {
   GetTotalExpForUser,
   /// ---- settingservice ---
   GetAllSettings,
+  /// ---- skillservice ---
+  CreateSkill,
+  GetSkillByID,
+  GetSkillsByUserID,
+  UpdateSkill,
+  DeleteSkill,
+  GetUserSkillProgress,
+  /// ---- projectservice ---
+  GetSkillsForProject,
+  AddProjectSkill,
+  RemoveProjectSkill,
+  GetProjects,
 };

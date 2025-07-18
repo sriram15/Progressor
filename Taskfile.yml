@@ -11,6 +11,8 @@ vars:
   BIN_DIR: "bin"
   VITE_PORT: '{{.WAILS_VITE_PORT | default 9245}}'
 
+dotenv: ['.env']
+
 tasks:
   build:
     summary: Builds the application
@@ -31,4 +33,28 @@ tasks:
     summary: Runs the application in development mode
     cmds:
       - wails3 dev -config ./build/config.yml -port {{.VITE_PORT}}
+
+  goose:up:
+    summary: Runs goose migrations up by 1
+    cmds:
+      - goose -dir internal/database/migrations turso "{{.TURSO_DB_PATH}}?authToken={{.TURSO_AUTH_TOKEN}}" up
+    env:
+      TURSO_DB_PATH: "{{.TURSO_DB_PATH}}"
+      TURSO_AUTH_TOKEN: "{{.TURSO_AUTH_TOKEN}}"
+
+  goose:down:
+    summary: Runs goose migrations down by 1
+    cmds:
+      - goose -dir internal/database/migrations turso "{{.TURSO_DB_PATH}}?authToken={{.TURSO_AUTH_TOKEN}}" down
+    env:
+      TURSO_DB_PATH: "{{.TURSO_DB_PATH}}"
+      TURSO_AUTH_TOKEN: "{{.TURSO_AUTH_TOKEN}}"
+
+  goose:status:
+    summary: Checks the status of goose migrations
+    cmds:
+      - goose -dir internal/database/migrations turso "{{.TURSO_DB_PATH}}?authToken={{.TURSO_AUTH_TOKEN}}" status
+    env:
+      TURSO_DB_PATH: "{{.TURSO_DB_PATH}}"
+      TURSO_AUTH_TOKEN: "{{.TURSO_AUTH_TOKEN}}"
 

@@ -125,6 +125,7 @@ SELECT
     c.isactive,
     c.estimatedMins,
     c.trackedMins,
+    c.projectId,
     te.id AS time_entry_id,
     te.startTime,
     te.endTime
@@ -152,6 +153,7 @@ type GetCardRow struct {
 	Isactive      bool           `json:"isactive"`
 	Estimatedmins int64          `json:"estimatedmins"`
 	Trackedmins   int64          `json:"trackedmins"`
+	Projectid     int64          `json:"projectid"`
 	TimeEntryID   sql.NullInt64  `json:"time_entry_id"`
 	Starttime     sql.NullTime   `json:"starttime"`
 	Endtime       sql.NullTime   `json:"endtime"`
@@ -171,6 +173,7 @@ func (q *Queries) GetCard(ctx context.Context, db DBTX, arg GetCardParams) (GetC
 		&i.Isactive,
 		&i.Estimatedmins,
 		&i.Trackedmins,
+		&i.Projectid,
 		&i.TimeEntryID,
 		&i.Starttime,
 		&i.Endtime,
