@@ -2,13 +2,13 @@ package main
 
 import (
 	"embed"
-	_ "embed"
 	"log"
 	"time"
 
 	"github.com/joho/godotenv"
 	"github.com/sriram15/progressor-todo-app/internal/connection"
 	"github.com/sriram15/progressor-todo-app/internal/database"
+	"github.com/sriram15/progressor-todo-app/internal/events"
 	"github.com/sriram15/progressor-todo-app/internal/service"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
@@ -37,12 +37,15 @@ func main() {
 	// defer db.Close()
 
 	queries := database.New()
+	eventBus := events.NewEventBus()
 
-	projectService := service.NewProjectService()
+	projectService := service.NewProjectService(queries)
 	taskCompletionService := service.NewTaskCompletionService(queries)
-	cardService := service.NewCardService(projectService, taskCompletionService, queries)
+	cardService := service.NewCardService(projectService, taskCompletionService, queries, eventBus)
 	progressService := service.NewProgressService(taskCompletionService, queries)
 	settingsService := service.NewSettingService()
+	skillService := service.NewSkillService(queries, eventBus, projectService)
+	skillService.RegisterEventHandlers()
 	// shortcuts := internal.NewShortcut()
 
 	// Create a new Wails application by providing the necessary options.
@@ -57,6 +60,8 @@ func main() {
 			application.NewService(cardService),
 			application.NewService(progressService),
 			application.NewService(settingsService),
+			application.NewService(projectService),
+			application.NewService(skillService),
 		},
 		Assets: application.AssetOptions{
 			Handler: application.AssetFileServerFS(assets),

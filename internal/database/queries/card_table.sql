@@ -10,6 +10,7 @@ SELECT
     c.isactive,
     c.estimatedMins,
     c.trackedMins,
+    c.projectId,
     te.id AS time_entry_id,
     te.startTime,
     te.endTime

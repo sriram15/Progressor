@@ -3,11 +3,15 @@
 
 import * as CardService from "./cardservice.js";
 import * as ProgressService from "./progressservice.js";
+import * as ProjectService from "./projectservice.js";
 import * as SettingService from "./settingservice.js";
+import * as SkillService from "./skillservice.js";
 export {
     CardService,
     ProgressService,
-    SettingService
+    ProjectService,
+    SettingService,
+    SkillService
 };
 
 export * from "./models.js";

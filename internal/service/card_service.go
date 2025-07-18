@@ -4,10 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"log"
 	"time"
 
 	"github.com/sriram15/progressor-todo-app/internal/connection"
 	"github.com/sriram15/progressor-todo-app/internal/database"
+	"github.com/sriram15/progressor-todo-app/internal/events"
 )
 
 var (
@@ -55,14 +57,16 @@ type CardService struct {
 	projectService        IProjectService
 	taskCompletionService ITaskCompletionService
 	queries               *database.Queries
+	eventBus              *events.EventBus
 }
 
-func NewCardService(projectService IProjectService, taskCompletionService ITaskCompletionService, queries *database.Queries) *CardService {
+func NewCardService(projectService IProjectService, taskCompletionService ITaskCompletionService, queries *database.Queries, eventBus *events.EventBus) *CardService {
 	return &CardService{
 		ctx:                   context.Background(),
 		projectService:        projectService,
 		taskCompletionService: taskCompletionService,
 		queries:               queries,
+		eventBus:              eventBus,
 	}
 }
 
@@ -393,6 +397,17 @@ func (c *CardService) StopCard(projectId uint, id uint) error {
 	if err != nil {
 		return err
 	}
+
+	// Publish card stopped event
+	event := events.CardStoppedEvent{
+		CardID:    card.CardID,
+		ProjectID: card.Projectid,
+		UserID:    DefaultUserID,
+		TimeSpent: time.Duration(duration) * time.Minute,
+		StoppedAt: currentEndTime,
+	}
+	c.eventBus.Publish(events.CardStoppedTopic, event)
+	log.Printf("Published CardStoppedEvent: %+v", event)
 
 	return tx.Commit()
 }

@@ -23,6 +23,7 @@ export class GetCardRow {
     "isactive": boolean;
     "estimatedmins": number;
     "trackedmins": number;
+    "projectid": number;
     "time_entry_id": sql$0.NullInt64;
     "starttime": sql$0.NullTime;
     "endtime": sql$0.NullTime;
@@ -59,6 +60,9 @@ export class GetCardRow {
         if (!("trackedmins" in $$source)) {
             this["trackedmins"] = 0;
         }
+        if (!("projectid" in $$source)) {
+            this["projectid"] = 0;
+        }
         if (!("time_entry_id" in $$source)) {
             this["time_entry_id"] = (new sql$0.NullInt64());
         }
@@ -80,9 +84,9 @@ export class GetCardRow {
         const $$createField3_0 = $$createType1;
         const $$createField4_0 = $$createType1;
         const $$createField6_0 = $$createType1;
-        const $$createField10_0 = $$createType2;
-        const $$createField11_0 = $$createType1;
+        const $$createField11_0 = $$createType2;
         const $$createField12_0 = $$createType1;
+        const $$createField13_0 = $$createType1;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         if ("description" in $$parsedSource) {
             $$parsedSource["description"] = $$createField2_0($$parsedSource["description"]);
@@ -97,13 +101,13 @@ export class GetCardRow {
             $$parsedSource["completedat"] = $$createField6_0($$parsedSource["completedat"]);
         }
         if ("time_entry_id" in $$parsedSource) {
-            $$parsedSource["time_entry_id"] = $$createField10_0($$parsedSource["time_entry_id"]);
+            $$parsedSource["time_entry_id"] = $$createField11_0($$parsedSource["time_entry_id"]);
         }
         if ("starttime" in $$parsedSource) {
-            $$parsedSource["starttime"] = $$createField11_0($$parsedSource["starttime"]);
+            $$parsedSource["starttime"] = $$createField12_0($$parsedSource["starttime"]);
         }
         if ("endtime" in $$parsedSource) {
-            $$parsedSource["endtime"] = $$createField12_0($$parsedSource["endtime"]);
+            $$parsedSource["endtime"] = $$createField13_0($$parsedSource["endtime"]);
         }
         return new GetCardRow($$parsedSource as Partial<GetCardRow>);
     }
@@ -219,6 +223,39 @@ export class ListCardsRow {
     }
 }
 
+export class Project {
+    "id": number;
+    "name": string;
+    "createdat": sql$0.NullTime;
+
+    /** Creates a new Project instance. */
+    constructor($$source: Partial<Project> = {}) {
+        if (!("id" in $$source)) {
+            this["id"] = 0;
+        }
+        if (!("name" in $$source)) {
+            this["name"] = "";
+        }
+        if (!("createdat" in $$source)) {
+            this["createdat"] = (new sql$0.NullTime());
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new Project instance from a string or object.
+     */
+    static createFrom($$source: any = {}): Project {
+        const $$createField2_0 = $$createType1;
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("createdat" in $$parsedSource) {
+            $$parsedSource["createdat"] = $$createField2_0($$parsedSource["createdat"]);
+        }
+        return new Project($$parsedSource as Partial<Project>);
+    }
+}
+
 export class TimeEntry {
     "id": number;
     "cardid": number;
@@ -253,6 +290,104 @@ export class TimeEntry {
     static createFrom($$source: any = {}): TimeEntry {
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
         return new TimeEntry($$parsedSource as Partial<TimeEntry>);
+    }
+}
+
+export class UserSkill {
+    "id": number;
+    "user_id": number;
+    "name": string;
+    "description": sql$0.NullString;
+    "created_at": sql$0.NullTime;
+    "updated_at": sql$0.NullTime;
+
+    /** Creates a new UserSkill instance. */
+    constructor($$source: Partial<UserSkill> = {}) {
+        if (!("id" in $$source)) {
+            this["id"] = 0;
+        }
+        if (!("user_id" in $$source)) {
+            this["user_id"] = 0;
+        }
+        if (!("name" in $$source)) {
+            this["name"] = "";
+        }
+        if (!("description" in $$source)) {
+            this["description"] = (new sql$0.NullString());
+        }
+        if (!("created_at" in $$source)) {
+            this["created_at"] = (new sql$0.NullTime());
+        }
+        if (!("updated_at" in $$source)) {
+            this["updated_at"] = (new sql$0.NullTime());
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new UserSkill instance from a string or object.
+     */
+    static createFrom($$source: any = {}): UserSkill {
+        const $$createField3_0 = $$createType0;
+        const $$createField4_0 = $$createType1;
+        const $$createField5_0 = $$createType1;
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("description" in $$parsedSource) {
+            $$parsedSource["description"] = $$createField3_0($$parsedSource["description"]);
+        }
+        if ("created_at" in $$parsedSource) {
+            $$parsedSource["created_at"] = $$createField4_0($$parsedSource["created_at"]);
+        }
+        if ("updated_at" in $$parsedSource) {
+            $$parsedSource["updated_at"] = $$createField5_0($$parsedSource["updated_at"]);
+        }
+        return new UserSkill($$parsedSource as Partial<UserSkill>);
+    }
+}
+
+export class UserSkillProgress {
+    "id": number;
+    "user_id": number;
+    "skill_id": number;
+    "total_minutes_tracked": sql$0.NullInt64;
+    "last_updated": sql$0.NullTime;
+
+    /** Creates a new UserSkillProgress instance. */
+    constructor($$source: Partial<UserSkillProgress> = {}) {
+        if (!("id" in $$source)) {
+            this["id"] = 0;
+        }
+        if (!("user_id" in $$source)) {
+            this["user_id"] = 0;
+        }
+        if (!("skill_id" in $$source)) {
+            this["skill_id"] = 0;
+        }
+        if (!("total_minutes_tracked" in $$source)) {
+            this["total_minutes_tracked"] = (new sql$0.NullInt64());
+        }
+        if (!("last_updated" in $$source)) {
+            this["last_updated"] = (new sql$0.NullTime());
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new UserSkillProgress instance from a string or object.
+     */
+    static createFrom($$source: any = {}): UserSkillProgress {
+        const $$createField3_0 = $$createType2;
+        const $$createField4_0 = $$createType1;
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("total_minutes_tracked" in $$parsedSource) {
+            $$parsedSource["total_minutes_tracked"] = $$createField3_0($$parsedSource["total_minutes_tracked"]);
+        }
+        if ("last_updated" in $$parsedSource) {
+            $$parsedSource["last_updated"] = $$createField4_0($$parsedSource["last_updated"]);
+        }
+        return new UserSkillProgress($$parsedSource as Partial<UserSkillProgress>);
     }
 }
 

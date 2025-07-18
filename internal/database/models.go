@@ -36,6 +36,11 @@ type Project struct {
 	Createdat sql.NullTime `json:"createdat"`
 }
 
+type ProjectSkill struct {
+	ProjectID int64 `json:"project_id"`
+	SkillID   int64 `json:"skill_id"`
+}
+
 type TaskCompletion struct {
 	ID             int64     `json:"id"`
 	Cardid         int64     `json:"cardid"`
@@ -66,4 +71,21 @@ type UserProfile struct {
 	ArcherExperience   int64        `json:"archerExperience"`
 	IdleResources      int64        `json:"idleResources"`
 	LastLoginTimeStamp sql.NullTime `json:"lastLoginTimeStamp"`
+}
+
+type UserSkill struct {
+	ID          int64          `json:"id"`
+	UserID      int64          `json:"user_id"`
+	Name        string         `json:"name"`
+	Description sql.NullString `json:"description"`
+	CreatedAt   sql.NullTime   `json:"created_at"`
+	UpdatedAt   sql.NullTime   `json:"updated_at"`
+}
+
+type UserSkillProgress struct {
+	ID                  int64         `json:"id"`
+	UserID              int64         `json:"user_id"`
+	SkillID             int64         `json:"skill_id"`
+	TotalMinutesTracked sql.NullInt64 `json:"total_minutes_tracked"`
+	LastUpdated         sql.NullTime  `json:"last_updated"`
 }
