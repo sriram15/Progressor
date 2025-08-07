@@ -2,6 +2,7 @@ package main
 
 import (
 	"embed"
+	"fmt"
 	"log"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/sriram15/progressor-todo-app/internal/events"
 	"github.com/sriram15/progressor-todo-app/internal/service"
 	"github.com/wailsapp/wails/v3/pkg/application"
+	"github.com/wailsapp/wails/v3/pkg/services/notifications"
 )
 
 // Wails uses Go's `embed` package to embed the frontend files into the binary.
@@ -62,6 +64,7 @@ func main() {
 			application.NewService(settingsService),
 			application.NewService(projectService),
 			application.NewService(skillService),
+			application.NewService(notifications.New()),
 		},
 		Assets: application.AssetOptions{
 			Handler: application.AssetFileServerFS(assets),
@@ -71,12 +74,24 @@ func main() {
 		},
 	})
 
+	focusTimerService := service.NewFocusTimerService(cardService, settingsService, eventBus, app)
+	focusTimerService.RegisterEventHandlers()
+
+	app.OnShutdown(func() {
+		focusTimerService.Shutdown()
+		err := cardService.Cleanup()
+		fmt.Println("Shutdown cleanup done")
+		if err != nil {
+			log.Printf("Error during card service cleanup on shutdown: %v", err)
+		}
+	})
+
 	// Create a new window with the necessary options.
 	// 'Title' is the title of the window.
 	// 'Mac' options tailor the window when running on macOS.
 	// 'BackgroundColour' is the background colour of the window.
 	// 'URL' is the URL that will be loaded into the webview.
-	app.NewWebviewWindowWithOptions(application.WebviewWindowOptions{
+	app.Window.NewWithOptions(application.WebviewWindowOptions{
 		Title: "Progressor",
 		Mac: application.MacWindow{
 			InvisibleTitleBarHeight: 50,
@@ -92,7 +107,7 @@ func main() {
 	go func() {
 		for {
 			now := time.Now().Format(time.RFC1123)
-			app.EmitEvent("time", now)
+			app.Event.Emit("time", now)
 			time.Sleep(time.Second)
 		}
 	}()

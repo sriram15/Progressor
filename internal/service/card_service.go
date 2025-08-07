@@ -341,7 +341,22 @@ func (c *CardService) StartCard(projectId uint, id uint) error {
 		return err
 	}
 
-	return tx.Commit()
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	// Publish card started event
+	event := events.CardStartedEvent{
+		CardID:    card.CardID,
+		ProjectID: card.Projectid,
+		UserID:    userId,
+		StartedAt: currentStartTime,
+	}
+	c.eventBus.Publish(events.CardStartedTopic, event)
+	log.Printf("Published CardStartedEvent: %+v", event)
+
+	return nil
 }
 
 func (c *CardService) StopCard(projectId uint, id uint) error {
@@ -389,6 +404,8 @@ func (c *CardService) StopCard(projectId uint, id uint) error {
 		return err
 	}
 
+	log.Println("Active time entry updated:", activeTimeentry.ID, "with duration:", duration)
+
 	err = c.queries.UpdateCardActive(c.ctx, tx, database.UpdateCardActiveParams{
 		ID:          int64(id),
 		Isactive:    false,
@@ -398,6 +415,12 @@ func (c *CardService) StopCard(projectId uint, id uint) error {
 		return err
 	}
 
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+
+	log.Println("Card updated to inactive:", id, "with tracked mins:", card.Trackedmins+int64(duration))
 	// Publish card stopped event
 	event := events.CardStoppedEvent{
 		CardID:    card.CardID,
@@ -409,7 +432,7 @@ func (c *CardService) StopCard(projectId uint, id uint) error {
 	c.eventBus.Publish(events.CardStoppedTopic, event)
 	log.Printf("Published CardStoppedEvent: %+v", event)
 
-	return tx.Commit()
+	return nil
 }
 
 func (c *CardService) Cleanup() error {
@@ -418,20 +441,25 @@ func (c *CardService) Cleanup() error {
 	db, unlock := connection.GetDB()
 	defer unlock()
 
+	log.Println("Cleaning up active card if any...")
 	activeCard, err := c.queries.GetActiveCard(c.ctx, db)
+
 	if err != nil {
 		if err == sql.ErrNoRows {
+			log.Println("No active card found. Cleanup completed successfully.")
 			return nil
 		} else {
 			return err
 		}
 	}
 
+	log.Println("Active card found:", activeCard, err)
 	// Stop the active Card Now
 	err = c.StopCard(uint(activeCard.Projectid), uint(activeCard.ID))
 	if err != nil {
 		return err
 	}
 
+	log.Printf("Cleanup completed successfully. Active card with %d id have been stopped.", activeCard.ID)
 	return nil
 }

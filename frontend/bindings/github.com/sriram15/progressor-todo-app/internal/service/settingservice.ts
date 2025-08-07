@@ -10,6 +10,11 @@ export function GetAllSettings(): Promise<any> & { cancel(): void } {
     return $resultPromise;
 }
 
+export function GetSetting(key: string): Promise<string> & { cancel(): void } {
+    let $resultPromise = $Call.ByID(3902356345, key) as any;
+    return $resultPromise;
+}
+
 export function SetSetting(key: string, value: string): Promise<void> & { cancel(): void } {
     let $resultPromise = $Call.ByID(3519942637, key, value) as any;
     return $resultPromise;
