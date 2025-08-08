@@ -13,10 +13,11 @@ type ISettingService interface {
 }
 
 type SettingService struct {
-	settings []interface{}
+	dbManager *connection.DBManager
+	settings  []interface{}
 }
 
-func NewSettingService() *SettingService {
+func NewSettingService(dbManager *connection.DBManager) *SettingService {
 	dbType, dbPath := connection.GetDBInfo()
 	settings := []interface{}{
 		map[string]string{"key": "dbType", "value": dbType, "display": "Database Type"},
@@ -24,7 +25,7 @@ func NewSettingService() *SettingService {
 		map[string]string{"key": "shortcut_open", "value": "Ctrl + Shift + P", "display": "Shortcut - Open App"},
 		map[string]string{"key": "active_card_timeout", "value": "1", "display": "Active Card Timeout (minutes)"},
 	}
-	return &SettingService{settings: settings}
+	return &SettingService{dbManager: dbManager, settings: settings}
 }
 
 func (s *SettingService) GetAllSettings() (interface{}, error) {

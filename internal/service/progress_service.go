@@ -23,64 +23,65 @@ type GetStatsResult struct {
 type IProgressService interface {
 	GetStats() (GetStatsResult, error)
 	GetDailyTotalMinutes() ([]database.GetDailyTotalMinutesRow, error)
+	GetTotalExpForUser(userID int64) (float64, error)
 }
 
 type ProgressService struct {
-	ctx                   context.Context
-	taskCompletionService ITaskCompletionService
-	queries               *database.Queries
+	ctx       context.Context
+	dbManager *connection.DBManager
 }
 
-func NewProgressService(taskCompletionService ITaskCompletionService, queries *database.Queries) *ProgressService {
+func NewProgressService(dbManager *connection.DBManager) *ProgressService {
 	return &ProgressService{
-		ctx:                   context.Background(),
-		taskCompletionService: taskCompletionService,
-		queries:               queries,
+		ctx:       context.Background(),
+		dbManager: dbManager,
 	}
 }
 
 func (p *ProgressService) GetStats() (GetStatsResult, error) {
-	db, unlock := connection.GetDB()
-	defer unlock()
+	var result GetStatsResult
+	var err error
 
-	weekMins, err := p.queries.AggregateWeekHours(p.ctx, db, int64(1))
+	readQueries := p.dbManager.Queries(p.ctx)
+
+	weekMins, err := readQueries.AggregateWeekHours(p.ctx, int64(1))
 	if err != nil {
-		return GetStatsResult{}, err
+		return result, err
 	}
 
-	prevWeekMins, err := p.queries.AggregatePreviousWeekHours(p.ctx, db, int64(1))
+	prevWeekMins, err := readQueries.AggregatePreviousWeekHours(p.ctx, int64(1))
 	if err != nil {
-		return GetStatsResult{}, err
+		return result, err
 	}
 
-	monthMins, err := p.queries.AggregateMonthHours(p.ctx, db, int64(1))
+	monthMins, err := readQueries.AggregateMonthHours(p.ctx, int64(1))
 	if err != nil {
-		return GetStatsResult{}, err
+		return result, err
 	}
 
-	prevMonthMins, err := p.queries.AggregatePreviousMonthHours(p.ctx, db, int64(1))
+	prevMonthMins, err := readQueries.AggregatePreviousMonthHours(p.ctx, int64(1))
 	if err != nil {
-		return GetStatsResult{}, err
+		return result, err
 	}
 
-	weekProgressDays, err := p.queries.GetWeeklyProgress(p.ctx, db)
+	weekProgressDays, err := readQueries.GetWeeklyProgress(p.ctx)
 	if err != nil {
-		return GetStatsResult{}, err
+		return result, err
 	}
 
-	previousWeekProgressDays, err := p.queries.GetPreviousWeeklyProgress(p.ctx, db)
+	previousWeekProgressDays, err := readQueries.GetPreviousWeeklyProgress(p.ctx)
 	if err != nil {
-		return GetStatsResult{}, err
+		return result, err
 	}
 
-	monthProgressDays, err := p.queries.GetMonthlyProgress(p.ctx, db)
+	monthProgressDays, err := readQueries.GetMonthlyProgress(p.ctx)
 	if err != nil {
-		return GetStatsResult{}, err
+		return result, err
 	}
 
-	previousMonthProgressDays, err := p.queries.GetPreviousMonthlyProgress(p.ctx, db)
+	previousMonthProgressDays, err := readQueries.GetPreviousMonthlyProgress(p.ctx)
 	if err != nil {
-		return GetStatsResult{}, err
+		return result, err
 	}
 
 	// Convert to hours from mins
@@ -89,20 +90,29 @@ func (p *ProgressService) GetStats() (GetStatsResult, error) {
 	prevWeekHours := math.Ceil(prevWeekMins / 60.0)
 	prevMonthHours := math.Ceil(prevMonthMins / 60.0)
 
-	return GetStatsResult{
+	result = GetStatsResult{
 		WeekHrs:       StatCardData{Value: int(weekHours), PrevValue: int(prevWeekHours)},
 		MonthHrs:      StatCardData{Value: int(monthHours), PrevValue: int(prevMonthHours)},
 		WeekProgress:  StatCardData{Value: int(weekProgressDays), PrevValue: int(previousWeekProgressDays)},
 		MonthProgress: StatCardData{Value: int(monthProgressDays), PrevValue: int(previousMonthProgressDays)},
-	}, nil
+	}
+	return result, nil
 }
 
 func (p *ProgressService) GetDailyTotalMinutes() ([]database.GetDailyTotalMinutesRow, error) {
-	db, unlock := connection.GetDB()
-	defer unlock()
-	return p.queries.GetDailyTotalMinutes(p.ctx, db)
+	var result []database.GetDailyTotalMinutesRow
+	var err error
+
+	readQueries := p.dbManager.Queries(p.ctx)
+	result, err = readQueries.GetDailyTotalMinutes(p.ctx)
+	return result, err
 }
 
-func (p *ProgressService) GetTotalExpForUser() (float64, error) {
-	return p.taskCompletionService.TotalUserExp(userId)
+func (p *ProgressService) GetTotalExpForUser(userID int64) (float64, error) {
+	readQueries := p.dbManager.Queries(p.ctx)
+	totalExp, err := readQueries.TotalUserExp(p.ctx, userID)
+	if err != nil {
+		return 0, err
+	}
+	return totalExp, nil
 }

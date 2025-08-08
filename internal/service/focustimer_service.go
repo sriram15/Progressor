@@ -67,7 +67,6 @@ func (s *FocusTimerService) handleCardStarted(eventData interface{}) {
 	if err != nil {
 		log.Println("Error sending notification:", err)
 	}
-	
 
 	s.startTimer(event.CardID)
 }

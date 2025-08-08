@@ -15,31 +15,33 @@ type ITaskCompletionService interface {
 }
 
 type TaskCompletionService struct {
-	ctx     context.Context
-	queries *database.Queries
+	ctx       context.Context
+	dbManager *connection.DBManager
 }
 
-func NewTaskCompletionService(queries *database.Queries) *TaskCompletionService {
+func NewTaskCompletionService(dbManager *connection.DBManager) *TaskCompletionService {
 	return &TaskCompletionService{
-		ctx:     context.Background(),
-		queries: queries,
+		ctx:       context.Background(),
+		dbManager: dbManager,
 	}
 }
 
 // CreateTaskCompletion creates a new TaskCompletion record and returns it
 func (t *TaskCompletionService) CreateTaskCompletion(cardId int64, userId int64, baseExp int64, timeBonusExp int64, streakBonusExp int64) (database.TaskCompletion, error) {
 	totalExp := baseExp + timeBonusExp + streakBonusExp
+	var taskValue database.TaskCompletion
 
-	db, unlock := connection.GetDB()
-	defer unlock()
-
-	taskValue, err := t.queries.CreateTaskCompletion(t.ctx, db, database.CreateTaskCompletionParams{
-		Cardid:         cardId,
-		Userid:         userId,
-		Baseexp:        baseExp,
-		Timebonusexp:   timeBonusExp,
-		Streakbonusexp: streakBonusExp,
-		Totalexp:       totalExp,
+	err := t.dbManager.Execute(t.ctx, func(q *database.Queries) error {
+		var err error
+		taskValue, err = q.CreateTaskCompletion(t.ctx, database.CreateTaskCompletionParams{
+			Cardid:         cardId,
+			Userid:         userId,
+			Baseexp:        baseExp,
+			Timebonusexp:   timeBonusExp,
+			Streakbonusexp: streakBonusExp,
+			Totalexp:       totalExp,
+		})
+		return err
 	})
 
 	if err != nil {
@@ -51,41 +53,21 @@ func (t *TaskCompletionService) CreateTaskCompletion(cardId int64, userId int64,
 
 // GetTaskCompletion retrieves a TaskCompletion record using cardId and userId
 func (t *TaskCompletionService) GetTaskCompletion(cardId int64, userId int64) (database.TaskCompletion, error) {
-	db, unlock := connection.GetDB()
-	defer unlock()
-
-	taskCompletion, err := t.queries.GetTaskCompletion(t.ctx, db, database.GetTaskCompletionParams{
+	queries := t.dbManager.Queries(t.ctx)
+	return queries.GetTaskCompletion(t.ctx, database.GetTaskCompletionParams{
 		Cardid: cardId,
 		Userid: userId,
 	})
-	if err != nil {
-		return database.TaskCompletion{}, err
-	}
-
-	return taskCompletion, nil
 }
 
 // ListTaskCompletionsByUser lists all task completions for a user
 func (t *TaskCompletionService) ListTaskCompletionsByUser(userId int64) ([]database.TaskCompletion, error) {
-	db, unlock := connection.GetDB()
-	defer unlock()
-
-	taskCompletions, err := t.queries.ListTaskCompletionsByUser(t.ctx, db, userId)
-	if err != nil {
-		return nil, err
-	}
-
-	return taskCompletions, nil
+	queries := t.dbManager.Queries(t.ctx)
+	return queries.ListTaskCompletionsByUser(t.ctx, userId)
 }
 
 // TotalUserExp calculates total user exp
 func (t *TaskCompletionService) TotalUserExp(userId int64) (float64, error) {
-	db, unlock := connection.GetDB()
-	defer unlock()
-
-	totalExp, err := t.queries.TotalUserExp(t.ctx, db, userId)
-	if err != nil {
-		return 0, err
-	}
-	return totalExp, nil
+	queries := t.dbManager.Queries(t.ctx)
+	return queries.TotalUserExp(t.ctx, userId)
 }

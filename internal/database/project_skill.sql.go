@@ -18,8 +18,8 @@ type AddProjectSkillParams struct {
 	SkillID   int64 `json:"skill_id"`
 }
 
-func (q *Queries) AddProjectSkill(ctx context.Context, db DBTX, arg AddProjectSkillParams) error {
-	_, err := db.ExecContext(ctx, addProjectSkill, arg.ProjectID, arg.SkillID)
+func (q *Queries) AddProjectSkill(ctx context.Context, arg AddProjectSkillParams) error {
+	_, err := q.db.ExecContext(ctx, addProjectSkill, arg.ProjectID, arg.SkillID)
 	return err
 }
 
@@ -27,8 +27,8 @@ const getSkillsForProject = `-- name: GetSkillsForProject :many
 SELECT s.id, s.user_id, s.name, s.description, s.created_at, s.updated_at FROM UserSkills s JOIN ProjectSkill ps ON s.id = ps.skill_id WHERE ps.project_id = ?
 `
 
-func (q *Queries) GetSkillsForProject(ctx context.Context, db DBTX, projectID int64) ([]UserSkill, error) {
-	rows, err := db.QueryContext(ctx, getSkillsForProject, projectID)
+func (q *Queries) GetSkillsForProject(ctx context.Context, projectID int64) ([]UserSkill, error) {
+	rows, err := q.db.QueryContext(ctx, getSkillsForProject, projectID)
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +66,7 @@ type RemoveProjectSkillParams struct {
 	SkillID   int64 `json:"skill_id"`
 }
 
-func (q *Queries) RemoveProjectSkill(ctx context.Context, db DBTX, arg RemoveProjectSkillParams) error {
-	_, err := db.ExecContext(ctx, removeProjectSkill, arg.ProjectID, arg.SkillID)
+func (q *Queries) RemoveProjectSkill(ctx context.Context, arg RemoveProjectSkillParams) error {
+	_, err := q.db.ExecContext(ctx, removeProjectSkill, arg.ProjectID, arg.SkillID)
 	return err
 }

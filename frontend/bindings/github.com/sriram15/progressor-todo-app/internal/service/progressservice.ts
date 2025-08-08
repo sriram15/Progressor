@@ -31,8 +31,8 @@ export function GetStats(): Promise<$models.GetStatsResult> & { cancel(): void }
     return $typingPromise;
 }
 
-export function GetTotalExpForUser(): Promise<number> & { cancel(): void } {
-    let $resultPromise = $Call.ByID(3476611633) as any;
+export function GetTotalExpForUser(userID: number): Promise<number> & { cancel(): void } {
+    let $resultPromise = $Call.ByID(3476611633, userID) as any;
     return $resultPromise;
 }
 

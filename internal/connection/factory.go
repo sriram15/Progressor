@@ -1,7 +1,6 @@
 package connection
 
 import (
-	"database/sql"
 	"fmt"
 	"os"
 	"sync"
@@ -12,13 +11,13 @@ const DATABASE_NAME = "progressor.db"
 
 var (
 	connector DBConnector
-	db        *sql.DB
+	manager   *DBManager
 	once      sync.Once
-	dbMutex   sync.Mutex
 )
 
 // InitDB determines the database type from environment variables,
-// creates the appropriate connector, connects, and applies migrations.
+// creates the appropriate connector, connects, applies migrations,
+// and initializes the DBManager.
 func InitDB() error {
 	var dbErr error
 	once.Do(func() {
@@ -51,20 +50,24 @@ func InitDB() error {
 			return
 		}
 
-		db = connectedDB
+		manager = NewDBManager(connectedDB)
 		fmt.Println("Database ready.")
 	})
 	return dbErr
 }
 
-// GetDB checks if the current db connection is alive, and if not, reopens it.
-func GetDB() (*sql.DB, func()) {
-	dbMutex.Lock()
-	return db, func() {
-		dbMutex.Unlock()
+// GetManager returns the singleton DBManager instance.
+// It will panic if InitDB has not been called successfully.
+func GetManager() *DBManager {
+	if manager == nil {
+		panic("DBManager not initialized. Call connection.InitDB() first.")
 	}
+	return manager
 }
 
 func GetDBInfo() (string, string) {
+	if connector == nil {
+		return "Unknown", "Connector not initialized"
+	}
 	return connector.GetDBInfo()
 }

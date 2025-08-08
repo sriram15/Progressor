@@ -16,13 +16,13 @@
     import { onMount } from "svelte";
     import { EVENTS } from "@/constants";
     import FixedSidebarPageLayout from "./layouts/FixedSidebarPageLayout.svelte";
-    import type { database } from "@bindings/database";
+    import { ListCardsRow } from "@bindings/github.com/sriram15/progressor-todo-app/internal/database";
 
     import EditCard from "@/components/EditCard.svelte";
     import ActiveCard from "@/components/ActiveCard.svelte";
     import StatsBar from "@/components/StatsBar.svelte";
     import ProjectViewFilter from "@/components/ProjectViewFilter.svelte";
-    import { fade, fly } from "svelte/transition";
+    import { fly } from "svelte/transition";
 
     interface Props {
         projectId: number;
@@ -33,8 +33,8 @@
     const initialStatus: number = 0;
 
     let selectedCardId: number | null = $state(null);
-    let activeCard: database.ListCardsRow | null = $state(null);
-    let cards = $state([]);
+    let activeCard: ListCardsRow | null = $state(null);
+    let cards: ListCardsRow[] = $state([]);
     let isLoading = $state(false);
     let error = $state("");
     let cardFilters = $state({
@@ -47,7 +47,7 @@
             cards = data;
             activeCard = data.find((row) => row.isactive) ?? null;
         } catch (err) {
-            error = err;
+            error = err as string;
         }
     };
 
@@ -87,14 +87,14 @@
         };
     });
 
-    const onCardSelect = (card_id: Number) => {
+    const onCardSelect = (card_id: number) => {
         emitEvent(EVENTS.CARD_SELECTED, {
             projectId: projectId,
             cardId: card_id,
         });
     };
 
-    const onDeleteCard = async (card: database.ListCardsRow) => {
+    const onDeleteCard = async (card: ListCardsRow) => {
         // TODO: Make this more pretty or use wails MessageDialog to show this message
         const res = confirm("Are you sure you want to delete the card?");
 
@@ -108,7 +108,7 @@
         }
     };
 
-    const onStatusChange = async (card: database.ListCardsRow) => {
+    const onStatusChange = async (card: ListCardsRow) => {
         try {
             await UpdateCardStatus(
                 projectId,
@@ -122,13 +122,13 @@
         }
     };
 
-    const onTrackingChange = async (card: database.ListCardsRow) => {
+    const onTrackingChange = async (card: ListCardsRow) => {
         try {
             if (!card.isactive) {
-                await StartCard(projectId, card.id);
+                await StartCard(projectId, card.card_id);
                 emitEvent(EVENTS.CARD_START, card);
             } else {
-                await StopCard(projectId, card.id);
+                await StopCard(projectId, card.card_id);
                 emitEvent(EVENTS.CARD_STOP, card);
             }
 
@@ -184,10 +184,10 @@
     {/snippet}
 </FixedSidebarPageLayout>
 
-{#snippet displayCard(card: database.ListCardsRow)}
+{#snippet displayCard(card: ListCardsRow)}
     {@const isCompleted = card.status === 1}
     <div
-        class={`rounded p-2 flex items-center group border-2 ${card.id === selectedCardId ? "border-primary-500" : ""} ${card.isactive ? "border-secondary-500" : ""}`}
+        class={`rounded p-2 flex items-center group border-2 ${card.card_id === selectedCardId ? "border-primary-500" : ""} ${card.isactive ? "border-secondary-500" : ""}`}
         onclick={() => onCardSelect(card.card_id)}
         role="button"
         tabindex="0"
@@ -212,7 +212,7 @@
             {card.trackedmins} mins
         </p>
         <div
-            class={`opacity-0 group-hover:opacity-100 ${card.id === selectedCardId ? "opacity-100" : ""} flex flex-1 items-center justify-end flex-grow`}
+            class={`opacity-0 group-hover:opacity-100 ${card.card_id === selectedCardId ? "opacity-100" : ""} flex flex-1 items-center justify-end flex-grow`}
             style="flex-basis: 25%"
         >
             <button class="btn btn-icon" onclick={() => onTrackingChange(card)}

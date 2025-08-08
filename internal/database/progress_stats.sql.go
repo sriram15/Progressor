@@ -19,8 +19,8 @@ WHERE p.id = ?
 AND strftime('%Y-%m', te.startTime) = strftime('%Y-%m', 'now')
 `
 
-func (q *Queries) AggregateMonthHours(ctx context.Context, db DBTX, id int64) (float64, error) {
-	row := db.QueryRowContext(ctx, aggregateMonthHours, id)
+func (q *Queries) AggregateMonthHours(ctx context.Context, id int64) (float64, error) {
+	row := q.db.QueryRowContext(ctx, aggregateMonthHours, id)
 	var totaltrackedminscurrentmonth float64
 	err := row.Scan(&totaltrackedminscurrentmonth)
 	return totaltrackedminscurrentmonth, err
@@ -35,8 +35,8 @@ WHERE p.id = ?
 AND strftime('%Y-%m', te.startTime) = strftime('%Y-%m', 'now', 'start of month', '-1 month')
 `
 
-func (q *Queries) AggregatePreviousMonthHours(ctx context.Context, db DBTX, id int64) (float64, error) {
-	row := db.QueryRowContext(ctx, aggregatePreviousMonthHours, id)
+func (q *Queries) AggregatePreviousMonthHours(ctx context.Context, id int64) (float64, error) {
+	row := q.db.QueryRowContext(ctx, aggregatePreviousMonthHours, id)
 	var totaltrackedminspreviousmonth float64
 	err := row.Scan(&totaltrackedminspreviousmonth)
 	return totaltrackedminspreviousmonth, err
@@ -51,8 +51,8 @@ WHERE p.id = ?
 AND strftime('%Y-%W', te.startTime) = strftime('%Y-%W', 'now', '-7 days')
 `
 
-func (q *Queries) AggregatePreviousWeekHours(ctx context.Context, db DBTX, id int64) (float64, error) {
-	row := db.QueryRowContext(ctx, aggregatePreviousWeekHours, id)
+func (q *Queries) AggregatePreviousWeekHours(ctx context.Context, id int64) (float64, error) {
+	row := q.db.QueryRowContext(ctx, aggregatePreviousWeekHours, id)
 	var totaltrackedminspreviousweek float64
 	err := row.Scan(&totaltrackedminspreviousweek)
 	return totaltrackedminspreviousweek, err
@@ -67,8 +67,8 @@ WHERE p.id = ?
 AND strftime('%Y-%W', te.startTime) = strftime('%Y-%W', 'now')
 `
 
-func (q *Queries) AggregateWeekHours(ctx context.Context, db DBTX, id int64) (float64, error) {
-	row := db.QueryRowContext(ctx, aggregateWeekHours, id)
+func (q *Queries) AggregateWeekHours(ctx context.Context, id int64) (float64, error) {
+	row := q.db.QueryRowContext(ctx, aggregateWeekHours, id)
 	var totaltrackedminscurrentweek float64
 	err := row.Scan(&totaltrackedminscurrentweek)
 	return totaltrackedminscurrentweek, err
@@ -93,8 +93,8 @@ type GetDailyTotalMinutesRow struct {
 	TotalMinutes sql.NullFloat64 `json:"total_minutes"`
 }
 
-func (q *Queries) GetDailyTotalMinutes(ctx context.Context, db DBTX) ([]GetDailyTotalMinutesRow, error) {
-	rows, err := db.QueryContext(ctx, getDailyTotalMinutes)
+func (q *Queries) GetDailyTotalMinutes(ctx context.Context) ([]GetDailyTotalMinutesRow, error) {
+	rows, err := q.db.QueryContext(ctx, getDailyTotalMinutes)
 	if err != nil {
 		return nil, err
 	}
@@ -122,8 +122,8 @@ FROM TimeEntries
 WHERE strftime('%Y-%m', startTime) = strftime('%Y-%m', 'now')
 `
 
-func (q *Queries) GetMonthlyProgress(ctx context.Context, db DBTX) (int64, error) {
-	row := db.QueryRowContext(ctx, getMonthlyProgress)
+func (q *Queries) GetMonthlyProgress(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getMonthlyProgress)
 	var progress_days int64
 	err := row.Scan(&progress_days)
 	return progress_days, err
@@ -135,8 +135,8 @@ FROM TimeEntries
 WHERE strftime('%Y-%m', startTime) = strftime('%Y-%m', 'now', 'start of month', '-1 month')
 `
 
-func (q *Queries) GetPreviousMonthlyProgress(ctx context.Context, db DBTX) (int64, error) {
-	row := db.QueryRowContext(ctx, getPreviousMonthlyProgress)
+func (q *Queries) GetPreviousMonthlyProgress(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getPreviousMonthlyProgress)
 	var progress_days int64
 	err := row.Scan(&progress_days)
 	return progress_days, err
@@ -148,8 +148,8 @@ FROM TimeEntries
 WHERE strftime('%Y-%W', startTime) = strftime('%Y-%W', 'now', '-7 days')
 `
 
-func (q *Queries) GetPreviousWeeklyProgress(ctx context.Context, db DBTX) (int64, error) {
-	row := db.QueryRowContext(ctx, getPreviousWeeklyProgress)
+func (q *Queries) GetPreviousWeeklyProgress(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getPreviousWeeklyProgress)
 	var progress_days int64
 	err := row.Scan(&progress_days)
 	return progress_days, err
@@ -161,8 +161,8 @@ FROM TimeEntries
 WHERE strftime('%Y-%W', startTime) = strftime('%Y-%W', 'now')
 `
 
-func (q *Queries) GetWeeklyProgress(ctx context.Context, db DBTX) (int64, error) {
-	row := db.QueryRowContext(ctx, getWeeklyProgress)
+func (q *Queries) GetWeeklyProgress(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getWeeklyProgress)
 	var progress_days int64
 	err := row.Scan(&progress_days)
 	return progress_days, err

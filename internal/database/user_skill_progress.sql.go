@@ -19,8 +19,8 @@ type GetUserSkillProgressParams struct {
 	SkillID int64 `json:"skill_id"`
 }
 
-func (q *Queries) GetUserSkillProgress(ctx context.Context, db DBTX, arg GetUserSkillProgressParams) (UserSkillProgress, error) {
-	row := db.QueryRowContext(ctx, getUserSkillProgress, arg.UserID, arg.SkillID)
+func (q *Queries) GetUserSkillProgress(ctx context.Context, arg GetUserSkillProgressParams) (UserSkillProgress, error) {
+	row := q.db.QueryRowContext(ctx, getUserSkillProgress, arg.UserID, arg.SkillID)
 	var i UserSkillProgress
 	err := row.Scan(
 		&i.ID,
@@ -47,8 +47,8 @@ type UpsertUserSkillProgressParams struct {
 	TotalMinutesTracked sql.NullInt64 `json:"total_minutes_tracked"`
 }
 
-func (q *Queries) UpsertUserSkillProgress(ctx context.Context, db DBTX, arg UpsertUserSkillProgressParams) (UserSkillProgress, error) {
-	row := db.QueryRowContext(ctx, upsertUserSkillProgress, arg.UserID, arg.SkillID, arg.TotalMinutesTracked)
+func (q *Queries) UpsertUserSkillProgress(ctx context.Context, arg UpsertUserSkillProgressParams) (UserSkillProgress, error) {
+	row := q.db.QueryRowContext(ctx, upsertUserSkillProgress, arg.UserID, arg.SkillID, arg.TotalMinutesTracked)
 	var i UserSkillProgress
 	err := row.Scan(
 		&i.ID,
