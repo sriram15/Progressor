@@ -20,8 +20,8 @@ type CreateSkillParams struct {
 	Description sql.NullString `json:"description"`
 }
 
-func (q *Queries) CreateSkill(ctx context.Context, db DBTX, arg CreateSkillParams) (UserSkill, error) {
-	row := db.QueryRowContext(ctx, createSkill, arg.UserID, arg.Name, arg.Description)
+func (q *Queries) CreateSkill(ctx context.Context, arg CreateSkillParams) (UserSkill, error) {
+	row := q.db.QueryRowContext(ctx, createSkill, arg.UserID, arg.Name, arg.Description)
 	var i UserSkill
 	err := row.Scan(
 		&i.ID,
@@ -38,8 +38,8 @@ const deleteSkill = `-- name: DeleteSkill :exec
 DELETE FROM UserSkills WHERE id = ?
 `
 
-func (q *Queries) DeleteSkill(ctx context.Context, db DBTX, id int64) error {
-	_, err := db.ExecContext(ctx, deleteSkill, id)
+func (q *Queries) DeleteSkill(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, deleteSkill, id)
 	return err
 }
 
@@ -47,8 +47,8 @@ const getSkillByID = `-- name: GetSkillByID :one
 SELECT id, user_id, name, description, created_at, updated_at FROM UserSkills WHERE id = ? LIMIT 1
 `
 
-func (q *Queries) GetSkillByID(ctx context.Context, db DBTX, id int64) (UserSkill, error) {
-	row := db.QueryRowContext(ctx, getSkillByID, id)
+func (q *Queries) GetSkillByID(ctx context.Context, id int64) (UserSkill, error) {
+	row := q.db.QueryRowContext(ctx, getSkillByID, id)
 	var i UserSkill
 	err := row.Scan(
 		&i.ID,
@@ -65,8 +65,8 @@ const getSkillsByUserID = `-- name: GetSkillsByUserID :many
 SELECT id, user_id, name, description, created_at, updated_at FROM UserSkills WHERE user_id = ?
 `
 
-func (q *Queries) GetSkillsByUserID(ctx context.Context, db DBTX, userID int64) ([]UserSkill, error) {
-	rows, err := db.QueryContext(ctx, getSkillsByUserID, userID)
+func (q *Queries) GetSkillsByUserID(ctx context.Context, userID int64) ([]UserSkill, error) {
+	rows, err := q.db.QueryContext(ctx, getSkillsByUserID, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -105,8 +105,8 @@ type UpdateSkillParams struct {
 	ID          int64          `json:"id"`
 }
 
-func (q *Queries) UpdateSkill(ctx context.Context, db DBTX, arg UpdateSkillParams) (UserSkill, error) {
-	row := db.QueryRowContext(ctx, updateSkill, arg.Name, arg.Description, arg.ID)
+func (q *Queries) UpdateSkill(ctx context.Context, arg UpdateSkillParams) (UserSkill, error) {
+	row := q.db.QueryRowContext(ctx, updateSkill, arg.Name, arg.Description, arg.ID)
 	var i UserSkill
 	err := row.Scan(
 		&i.ID,

@@ -23,27 +23,29 @@ type ISkillService interface {
 }
 
 type SkillService struct {
-	queries        *database.Queries
+	dbManager      *connection.DBManager
 	eventBus       *events.EventBus
 	projectService IProjectService
 }
 
-
-func NewSkillService(queries *database.Queries, eventBus *events.EventBus, projectService IProjectService) *SkillService {
+func NewSkillService(dbManager *connection.DBManager, eventBus *events.EventBus, projectService IProjectService) *SkillService {
 	return &SkillService{
-		queries:        queries,
+		dbManager:      dbManager,
 		eventBus:       eventBus,
 		projectService: projectService,
 	}
 }
 
 func (s *SkillService) CreateSkill(ctx context.Context, userID int64, name string, description string) (*database.UserSkill, error) {
-	db, unlock := connection.GetDB()
-	defer unlock()
-	skill, err := s.queries.CreateSkill(ctx, db, database.CreateSkillParams{
-		UserID:      userID,
-		Name:        name,
-		Description: sql.NullString{String: description, Valid: description != ""},
+	var skill database.UserSkill
+	err := s.dbManager.Execute(ctx, func(q *database.Queries) error {
+		var err error
+		skill, err = q.CreateSkill(ctx, database.CreateSkillParams{
+			UserID:      userID,
+			Name:        name,
+			Description: sql.NullString{String: description, Valid: description != ""},
+		})
+		return err
 	})
 	if err != nil {
 		log.Printf("Error creating skill: %v", err)
@@ -53,9 +55,8 @@ func (s *SkillService) CreateSkill(ctx context.Context, userID int64, name strin
 }
 
 func (s *SkillService) GetSkillByID(ctx context.Context, id int64) (*database.UserSkill, error) {
-	db, unlock := connection.GetDB()
-	defer unlock()
-	skill, err := s.queries.GetSkillByID(ctx, db, id)
+	queries := s.dbManager.Queries(ctx)
+	skill, err := queries.GetSkillByID(ctx, id)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("skill with ID %d not found", id)
@@ -67,9 +68,8 @@ func (s *SkillService) GetSkillByID(ctx context.Context, id int64) (*database.Us
 }
 
 func (s *SkillService) GetSkillsByUserID(ctx context.Context, userID int64) ([]database.UserSkill, error) {
-	db, unlock := connection.GetDB()
-	defer unlock()
-	skills, err := s.queries.GetSkillsByUserID(ctx, db, userID)
+	queries := s.dbManager.Queries(ctx)
+	skills, err := queries.GetSkillsByUserID(ctx, userID)
 	if err != nil {
 		log.Printf("Error getting skills by user ID: %v", err)
 		return nil, fmt.Errorf("failed to get skills for user: %w", err)
@@ -78,12 +78,15 @@ func (s *SkillService) GetSkillsByUserID(ctx context.Context, userID int64) ([]d
 }
 
 func (s *SkillService) UpdateSkill(ctx context.Context, id int64, name string, description string) (*database.UserSkill, error) {
-	db, unlock := connection.GetDB()
-	defer unlock()
-	skill, err := s.queries.UpdateSkill(ctx, db, database.UpdateSkillParams{
-		ID:          id,
-		Name:        name,
-		Description: sql.NullString{String: description, Valid: description != ""},
+	var skill database.UserSkill
+	err := s.dbManager.Execute(ctx, func(q *database.Queries) error {
+		var err error
+		skill, err = q.UpdateSkill(ctx, database.UpdateSkillParams{
+			ID:          id,
+			Name:        name,
+			Description: sql.NullString{String: description, Valid: description != ""},
+		})
+		return err
 	})
 	if err != nil {
 		log.Printf("Error updating skill: %v", err)
@@ -93,20 +96,19 @@ func (s *SkillService) UpdateSkill(ctx context.Context, id int64, name string, d
 }
 
 func (s *SkillService) DeleteSkill(ctx context.Context, id int64) error {
-	db, unlock := connection.GetDB()
-	defer unlock()
-	err := s.queries.DeleteSkill(ctx, db, id)
-	if err != nil {
-		log.Printf("Error deleting skill: %v", err)
-		return fmt.Errorf("failed to delete skill: %w", err)
-	}
-	return nil
+	return s.dbManager.Execute(ctx, func(q *database.Queries) error {
+		err := q.DeleteSkill(ctx, id)
+		if err != nil {
+			log.Printf("Error deleting skill: %v", err)
+			return fmt.Errorf("failed to delete skill: %w", err)
+		}
+		return nil
+	})
 }
 
 func (s *SkillService) GetUserSkillProgress(ctx context.Context, userID, skillID int64) (*database.UserSkillProgress, error) {
-	db, unlock := connection.GetDB()
-	defer unlock()
-	progress, err := s.queries.GetUserSkillProgress(ctx, db, database.GetUserSkillProgressParams{
+	queries := s.dbManager.Queries(ctx)
+	progress, err := queries.GetUserSkillProgress(ctx, database.GetUserSkillProgressParams{
 		UserID:  userID,
 		SkillID: skillID,
 	})
@@ -143,20 +145,25 @@ func (s *SkillService) handleCardStopped(eventData interface{}) {
 	durationMins := int64(event.TimeSpent.Minutes())
 
 	// Upsert the user's skill progress for each skill associated with the project.
-	db, unlock := connection.GetDB()
-	defer unlock()
-
-	// Upsert the user's skill progress for each skill associated with the project.
-	for _, skill := range projectSkills {
-		_, err := s.queries.UpsertUserSkillProgress(ctx, db, database.UpsertUserSkillProgressParams{
-			UserID:              event.UserID,
-			SkillID:             skill.ID,
-			TotalMinutesTracked: sql.NullInt64{Int64: durationMins, Valid: true},
-		})
-		if err != nil {
-			log.Printf("Error upserting skill progress for skill %d: %v", skill.ID, err)
-			continue
+	err = s.dbManager.Execute(ctx, func(q *database.Queries) error {
+		for _, skill := range projectSkills {
+			_, err := q.UpsertUserSkillProgress(ctx, database.UpsertUserSkillProgressParams{
+				UserID:              event.UserID,
+				SkillID:             skill.ID,
+				TotalMinutesTracked: sql.NullInt64{Int64: durationMins, Valid: true},
+			})
+			if err != nil {
+				log.Printf("Error upserting skill progress for skill %d: %v", skill.ID, err)
+				// Decide if one failure should roll back the entire transaction.
+				// For now, we log and continue, but you might want to return the error.
+				return err
+			}
+			log.Printf("Successfully updated skill progress for skill %d by %d minutes.", skill.ID, durationMins)
 		}
-		log.Printf("Successfully updated skill progress for skill %d by %d minutes.", skill.ID, durationMins)
+		return nil
+	})
+
+	if err != nil {
+		log.Printf("Error in transaction while upserting skill progress: %v", err)
 	}
 }

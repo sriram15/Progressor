@@ -56,7 +56,6 @@ func (tc *TursoConnector) Connect() (*sql.DB, string, error) {
 		fmt.Println("Error creating connector:", err)
 		return nil, DBTypeTurso, err
 	}
-	defer connector.Close()
 
 	tursoDb := sql.OpenDB(connector)
 

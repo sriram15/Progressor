@@ -8,24 +8,15 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/sriram15/progressor-todo-app/internal/connection"
-	"github.com/sriram15/progressor-todo-app/internal/database"
 	"github.com/sriram15/progressor-todo-app/internal/events"
 	"github.com/sriram15/progressor-todo-app/internal/service"
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"github.com/wailsapp/wails/v3/pkg/services/notifications"
 )
 
-// Wails uses Go's `embed` package to embed the frontend files into the binary.
-// Any files in the frontend/dist folder will be embedded into the binary and
-// made available to the frontend.
-// See https://pkg.go.dev/embed for more information.
-
 //go:embed all:frontend/dist
 var assets embed.FS
 
-// main function serves as the application's entry point. It initializes the application, creates a window,
-// and starts a goroutine that emits a time-based event every second. It subsequently runs the application and
-// logs any error that might occur.
 func main() {
 
 	if err := godotenv.Load(); err != nil {
@@ -36,25 +27,19 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
-	// defer db.Close()
 
-	queries := database.New()
+	dbManager := connection.GetManager()
 	eventBus := events.NewEventBus()
 
-	projectService := service.NewProjectService(queries)
-	taskCompletionService := service.NewTaskCompletionService(queries)
-	cardService := service.NewCardService(projectService, taskCompletionService, queries, eventBus)
-	progressService := service.NewProgressService(taskCompletionService, queries)
-	settingsService := service.NewSettingService()
-	skillService := service.NewSkillService(queries, eventBus, projectService)
+	projectService := service.NewProjectService(dbManager)
+	taskCompletionService := service.NewTaskCompletionService(dbManager)
+	cardService := service.NewCardService(projectService, taskCompletionService, dbManager, eventBus)
+	progressService := service.NewProgressService(dbManager)
+	settingsService := service.NewSettingService(dbManager)
+	skillService := service.NewSkillService(dbManager, eventBus, projectService)
 	skillService.RegisterEventHandlers()
 	// shortcuts := internal.NewShortcut()
 
-	// Create a new Wails application by providing the necessary options.
-	// Variables 'Name' and 'Description' are for application metadata.
-	// 'Assets' configures the asset server with the 'FS' variable pointing to the frontend files.
-	// 'Bind' is a list of Go struct instances. The frontend has access to the methods of these instances.
-	// 'Mac' options tailor the application when running an macOS.
 	app := application.New(application.Options{
 		Name:        "progressor-todo-app",
 		Description: "Progressor Todo App",
@@ -86,11 +71,6 @@ func main() {
 		}
 	})
 
-	// Create a new window with the necessary options.
-	// 'Title' is the title of the window.
-	// 'Mac' options tailor the window when running on macOS.
-	// 'BackgroundColour' is the background colour of the window.
-	// 'URL' is the URL that will be loaded into the webview.
 	app.Window.NewWithOptions(application.WebviewWindowOptions{
 		Title: "Progressor",
 		Mac: application.MacWindow{
@@ -100,10 +80,9 @@ func main() {
 		},
 		BackgroundColour: application.NewRGB(27, 38, 54),
 		URL:              "/",
+		// Shortcuts:        shortcuts,
 	})
 
-	// Create a goroutine that emits an event containing the current time every second.
-	// The frontend can listen to this event and update the UI accordingly.
 	go func() {
 		for {
 			now := time.Now().Format(time.RFC1123)
@@ -112,10 +91,8 @@ func main() {
 		}
 	}()
 
-	// Run the application. This blocks until the application has been exited.
 	err = app.Run()
 
-	// If an error occurred while running the application, log it and exit.
 	if err != nil {
 		log.Fatal(err)
 	}

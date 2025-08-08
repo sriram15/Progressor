@@ -68,7 +68,7 @@
         error.set(null);
         try {
             apiData = await GetDailyTotalMinutes();
-            totalExp = await GetTotalExpForUser();
+            totalExp = await GetTotalExpForUser(1); // Assuming user ID 1
 
             const fetchedSkills = await GetSkillsByUserID(1); // Assuming user ID 1
             skills.set(fetchedSkills);
