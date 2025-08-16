@@ -3,12 +3,12 @@
   import ProjectSkillAssociation from "@/components/ProjectSkillAssociation.svelte";
   
   import { GetAllSettings } from "@/services/service";
-  import type { Setting } from "@bindings_service";
+  import type { SettingsItem } from "@bindings/github.com/sriram15/progressor-todo-app/internal/service/models";
 
   type SettingView = "General" | "Skills" | "Projects";
 
   let currentView: SettingView = $state("General");
-  let settings = $state<Setting[]>([]);
+  let settings = $state<SettingsItem[]>([])
   let loading = $state(true);
   let error = $state<string | null>(null);
 
@@ -18,7 +18,9 @@
             loading = true;
             error = null;
             try {
-                settings = await GetAllSettings();
+                const settingsMap = await GetAllSettings();
+                settings = settingsMap
+                console.log("Settings loaded:", settings);
             } catch (e: any) {
                 error = e.message;
             } finally {

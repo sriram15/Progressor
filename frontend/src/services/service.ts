@@ -11,26 +11,22 @@ import {
   StartCard,
   StopCard,
   GetActiveTimeEntry,
-} from "@bindings/github.com/sriram15/progressor-todo-app/internal/service/cardservice";
-
-import {
   GetStats,
   GetDailyTotalMinutes,
   GetTotalExpForUser,
-} from "@bindings/github.com/sriram15/progressor-todo-app/internal/service/progressservice";
-
-import { GetAllSettings } from "@bindings/github.com/sriram15/progressor-todo-app/internal/service/settingservice";
-
-import {
+  GetAllSettings,
   CreateSkill,
   GetSkillByID,
   GetSkillsByUserID,
   UpdateSkill,
   DeleteSkill,
   GetUserSkillProgress,
-} from "@bindings/github.com/sriram15/progressor-todo-app/internal/service/skillservice";
+  GetProjects, 
+  GetSkillsForProject,
+  AddProjectSkill,
+  RemoveProjectSkill 
+} from "@bindings/github.com/sriram15/progressor-todo-app/progressorapp";
 
-import { GetProjects, GetSkillsForProject, AddProjectSkill, RemoveProjectSkill } from "@bindings/github.com/sriram15/progressor-todo-app/internal/service/projectservice";
 
 export {
   GetAll,

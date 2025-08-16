@@ -42,3 +42,11 @@ func (m *DBManager) Execute(ctx context.Context, fn func(q *database.Queries) er
 func (m *DBManager) Queries(ctx context.Context) *database.Queries {
 	return database.New(m.db)
 }
+
+// Close closes the underlying database connection.
+func (m *DBManager) Close() error {
+	if m.db != nil {
+		return m.db.Close()
+	}
+	return nil
+}

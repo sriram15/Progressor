@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/pressly/goose/v3"
 	"github.com/sriram15/progressor-todo-app/internal"
@@ -13,58 +14,59 @@ import (
 
 // TursoConnector implements the DBConnector interface for Turso.
 type TursoConnector struct {
+	dbURL       string
+	authToken   string
 	loggableURL string
 }
 
 // NewTursoConnector creates a new TursoConnector.
-func NewTursoConnector() DBConnector {
-	return &TursoConnector{}
+func NewTursoConnector(dbURL, authToken string) DBConnector {
+	return &TursoConnector{dbURL: dbURL, authToken: authToken}
 }
 
 // Connect establishes a connection to the Turso database in embedded replica mode only.
 func (tc *TursoConnector) Connect() (*sql.DB, string, error) {
-	tursoDbPath := os.Getenv("TURSO_DB_PATH")
-	authToken := os.Getenv("TURSO_AUTH_TOKEN")
-	encryptionKey := os.Getenv("TURSO_ENCRYPTION_KEY")
-	dbReplicaName := "progressor-replica.db"
+	encryptionKey := os.Getenv("TURSO_ENCRYPTION_KEY") // Keep this from env for now
 
-	if tursoDbPath == "" || authToken == "" {
-		return nil, DBTypeTurso, fmt.Errorf("TURSO_DB_PATH, TURSO_AUTH_TOKEN must be set in the environment or .env file for embedded replica mode")
+	if tc.dbURL == "" || tc.authToken == "" {
+		return nil, DBTypeTurso, fmt.Errorf("Turso DB URL and Auth Token must be provided")
 	}
 
 	homeDir, err := os.UserHomeDir()
 	if err != nil {
-		fmt.Println("Error creating using the home directory for replica:", err)
-		return nil, DBTypeTurso, err
+		return nil, DBTypeTurso, fmt.Errorf("could not get user home directory: %w", err)
 	}
 
-	dbDir := filepath.Join(homeDir, fmt.Sprintf(".%s", internal.APP_NAME))
-	if err := os.MkdirAll(dbDir, 0755); err != nil {
-		fmt.Errorf("Could not create database directory at %s: %v", dbDir, err)
-		return nil, DBTypeTurso, err
+	appDir := filepath.Join(homeDir, fmt.Sprintf(".%s", internal.APP_NAME))
+	if err := os.MkdirAll(appDir, 0755); err != nil {
+		return nil, DBTypeTurso, fmt.Errorf("could not create app directory at %s: %w", appDir, err)
 	}
 
-	dbPath := filepath.Join(dbDir, dbReplicaName)
+	// Create a unique replica name based on the database URL to avoid conflicts
+	sanitizedURL := strings.ReplaceAll(tc.dbURL, "://", "_")
+	sanitizedURL = strings.ReplaceAll(sanitizedURL, ".", "_")
+	sanitizedURL = strings.ReplaceAll(sanitizedURL, "/", "_")
+	dbReplicaName := fmt.Sprintf("replica-%s.db", sanitizedURL)
+	dbPath := filepath.Join(appDir, dbReplicaName)
 
-	fmt.Printf("Created a local temp replica at: %s\n", dbPath)
+	fmt.Printf("Creating local Turso replica at: %s\n", dbPath)
 
-	connector, err := libsql.NewEmbeddedReplicaConnector(dbPath, tursoDbPath,
-		libsql.WithAuthToken(authToken),
+	connector, err := libsql.NewEmbeddedReplicaConnector(dbPath, tc.dbURL,
+		libsql.WithAuthToken(tc.authToken),
 		libsql.WithEncryption(encryptionKey),
 	)
 	if err != nil {
-		fmt.Println("Error creating connector:", err)
-		return nil, DBTypeTurso, err
+		return nil, DBTypeTurso, fmt.Errorf("failed to create Turso connector: %w", err)
 	}
 
 	tursoDb := sql.OpenDB(connector)
 
 	if err := tursoDb.Ping(); err != nil {
-		return nil, DBTypeTurso, err
+		tursoDb.Close()
+		return nil, DBTypeTurso, fmt.Errorf("failed to ping Turso database: %w", err)
 	}
-	// defer tursoDb.Close()
 
-	tc.loggableURL = tursoDbPath
+	tc.loggableURL = tc.dbURL // Log the actual remote URL
 	return tursoDb, DBTypeTurso, nil
 }
 

@@ -2,14 +2,10 @@ package main
 
 import (
 	"embed"
-	"fmt"
 	"log"
 	"time"
 
 	"github.com/joho/godotenv"
-	"github.com/sriram15/progressor-todo-app/internal/connection"
-	"github.com/sriram15/progressor-todo-app/internal/events"
-	"github.com/sriram15/progressor-todo-app/internal/service"
 	"github.com/wailsapp/wails/v3/pkg/application"
 	"github.com/wailsapp/wails/v3/pkg/services/notifications"
 )
@@ -18,37 +14,19 @@ import (
 var assets embed.FS
 
 func main() {
-
 	if err := godotenv.Load(); err != nil {
 		log.Println("No .env file found or error loading .env file (this may be normal if env vars are set externally):", err)
 	}
 
-	err := connection.InitDB()
-	if err != nil {
-		log.Fatalf("Failed to initialize database: %v", err)
-	}
+	progressorApp := NewProgressorApp()
 
-	dbManager := connection.GetManager()
-	eventBus := events.NewEventBus()
+	log.Println("Starting Progressor Todo App...")
 
-	projectService := service.NewProjectService(dbManager)
-	taskCompletionService := service.NewTaskCompletionService(dbManager)
-	cardService := service.NewCardService(projectService, taskCompletionService, dbManager, eventBus)
-	progressService := service.NewProgressService(dbManager)
-	settingsService := service.NewSettingService(dbManager)
-	skillService := service.NewSkillService(dbManager, eventBus, projectService)
-	skillService.RegisterEventHandlers()
-	// shortcuts := internal.NewShortcut()
-
-	app := application.New(application.Options{
+	wailsApp := application.New(application.Options{
 		Name:        "progressor-todo-app",
 		Description: "Progressor Todo App",
 		Services: []application.Service{
-			application.NewService(cardService),
-			application.NewService(progressService),
-			application.NewService(settingsService),
-			application.NewService(projectService),
-			application.NewService(skillService),
+			application.NewService(progressorApp),
 			application.NewService(notifications.New()),
 		},
 		Assets: application.AssetOptions{
@@ -57,21 +35,12 @@ func main() {
 		Mac: application.MacOptions{
 			ApplicationShouldTerminateAfterLastWindowClosed: true,
 		},
+		OnShutdown: progressorApp.Shutdown,
 	})
 
-	focusTimerService := service.NewFocusTimerService(cardService, settingsService, eventBus, app)
-	focusTimerService.RegisterEventHandlers()
+	progressorApp.Startup(wailsApp)
 
-	app.OnShutdown(func() {
-		focusTimerService.Shutdown()
-		err := cardService.Cleanup()
-		fmt.Println("Shutdown cleanup done")
-		if err != nil {
-			log.Printf("Error during card service cleanup on shutdown: %v", err)
-		}
-	})
-
-	app.Window.NewWithOptions(application.WebviewWindowOptions{
+	wailsApp.Window.NewWithOptions(application.WebviewWindowOptions{
 		Title: "Progressor",
 		Mac: application.MacWindow{
 			InvisibleTitleBarHeight: 50,
@@ -80,20 +49,17 @@ func main() {
 		},
 		BackgroundColour: application.NewRGB(27, 38, 54),
 		URL:              "/",
-		// Shortcuts:        shortcuts,
 	})
 
 	go func() {
 		for {
 			now := time.Now().Format(time.RFC1123)
-			app.Event.Emit("time", now)
+			wailsApp.Event.Emit("time", now)
 			time.Sleep(time.Second)
 		}
 	}()
 
-	err = app.Run()
-
-	if err != nil {
+	if err := wailsApp.Run(); err != nil {
 		log.Fatal(err)
 	}
 }

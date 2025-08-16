@@ -65,6 +65,35 @@ export class GetStatsResult {
     }
 }
 
+export class SettingsItem {
+    "key": string;
+    "value": string;
+    "display": string;
+
+    /** Creates a new SettingsItem instance. */
+    constructor($$source: Partial<SettingsItem> = {}) {
+        if (!("key" in $$source)) {
+            this["key"] = "";
+        }
+        if (!("value" in $$source)) {
+            this["value"] = "";
+        }
+        if (!("display" in $$source)) {
+            this["display"] = "";
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new SettingsItem instance from a string or object.
+     */
+    static createFrom($$source: any = {}): SettingsItem {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new SettingsItem($$parsedSource as Partial<SettingsItem>);
+    }
+}
+
 export class StatCardData {
     "value": number;
     "prevValue": number;

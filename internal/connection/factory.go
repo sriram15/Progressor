@@ -2,72 +2,71 @@ package connection
 
 import (
 	"fmt"
-	"os"
-	"sync"
+	"log"
+
+	"github.com/sriram15/progressor-todo-app/internal/profile"
 )
 
 // DATABASE_NAME is the default name for the SQLite database file.
 const DATABASE_NAME = "progressor.db"
 
-var (
-	connector DBConnector
-	manager   *DBManager
-	once      sync.Once
-)
-
-// InitDB determines the database type from environment variables,
-// creates the appropriate connector, connects, applies migrations,
-// and initializes the DBManager.
+// InitDB is deprecated. Use NewManagerForProfile instead.
+// This function is part of the old singleton pattern and will be removed.
 func InitDB() error {
-	var dbErr error
-	once.Do(func() {
-		dbType := os.Getenv("DB_TYPE")
-
-		switch dbType {
-		case DBTypeSQLite, "sqlite3", "": // Default to SQLite
-			fmt.Println("Using SQLite database connector.")
-			connector = NewSQLiteConnector()
-		case DBTypeTurso:
-			fmt.Println("Using Turso database connector.")
-			connector = NewTursoConnector()
-		default:
-			dbErr = fmt.Errorf("unsupported DB_TYPE: %s. Supported types are 'sqlite' or 'turso'", dbType)
-			return
-		}
-
-		connectedDB, actualDBType, err := connector.Connect()
-		if err != nil {
-			dbErr = fmt.Errorf("failed to connect to database (%s): %w", dbType, err)
-			return
-		}
-
-		fmt.Printf("Successfully established database connection (Type: %s).\n", actualDBType)
-
-		if err := connector.Migrate(connectedDB, actualDBType); err != nil {
-			// It's important to close the DB if migration fails to prevent leaks.
-			connectedDB.Close()
-			dbErr = fmt.Errorf("failed to apply migrations for %s: %w", actualDBType, err)
-			return
-		}
-
-		manager = NewDBManager(connectedDB)
-		fmt.Println("Database ready.")
-	})
-	return dbErr
+	return fmt.Errorf("InitDB is deprecated and should not be called")
 }
 
-// GetManager returns the singleton DBManager instance.
-// It will panic if InitDB has not been called successfully.
+// GetManager is deprecated. The DBManager should be retrieved from the active AppSession.
+// This function is part of the old singleton pattern and will be removed.
 func GetManager() *DBManager {
-	if manager == nil {
-		panic("DBManager not initialized. Call connection.InitDB() first.")
-	}
-	return manager
+	panic("GetManager is deprecated. The DBManager should be retrieved from the active AppSession.")
 }
 
+// GetDBInfo is deprecated.
+// This function is part of the old singleton pattern and will be removed.
 func GetDBInfo() (string, string) {
-	if connector == nil {
-		return "Unknown", "Connector not initialized"
+	return "Unknown", "GetDBInfo is deprecated."
+}
+
+// NewManagerForProfile creates a new DBManager for a given profile.
+// It handles the creation of the correct connector (SQLite or Turso),
+// fetches the token for Turso, connects, and runs migrations.
+func NewManagerForProfile(p *profile.Profile) (*DBManager, error) {
+	var connector DBConnector
+
+	fmt.Println("Creating database manager for profile: %s", p.DBType)
+
+	switch p.DBType {
+	case profile.DBTypeSQLite, "": // Default to SQLite
+		fmt.Printf("Creating SQLite connector for profile: %s\n", p.Name)
+		connector = NewSQLiteConnector(p.Name)
+	case profile.DBTypeTurso:
+		fmt.Printf("Creating Turso connector for profile: %s\n", p.Name)
+		// The AuthTokenKey from the profile is the key for the keychain
+		token, err := profile.GetToken(p.AuthTokenKey)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get token for profile %s: %w", p.Name, err)
+		}
+		connector = NewTursoConnector(p.DBUrl, token)
+	default:
+		return nil, fmt.Errorf("unsupported DB_TYPE: %s", p.DBType)
 	}
-	return connector.GetDBInfo()
+
+	log.Println("Trying to Connect to database for profile:", p.Name)
+
+	connectedDB, actualDBType, err := connector.Connect()
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to database for profile %s: %w", p.Name, err)
+	}
+
+	fmt.Printf("Successfully established database connection (Type: %s) for profile %s.\n", actualDBType, p.Name)
+
+	if err := connector.Migrate(connectedDB, actualDBType); err != nil {
+		connectedDB.Close()
+		return nil, fmt.Errorf("failed to apply migrations for profile %s: %w", p.Name, err)
+	}
+
+	manager := NewDBManager(connectedDB)
+	fmt.Println("Database manager created successfully.")
+	return manager, nil
 }
