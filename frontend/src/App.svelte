@@ -16,39 +16,39 @@
     import SettingsPage from "./pages/SettingsPage.svelte";
     import ProjectViewPage from "./pages/ProjectViewPage.svelte";
     import ProgressPage from "./pages/ProgressPage.svelte";
-    import OnboardingPage from './pages/OnboardingPage.svelte'; // New import
-    import { GetProfiles, SwitchProfile } from '@bindings/github.com/sriram15/progressor-todo-app/progressorapp'; // New import
+    import OnboardingPage from './pages/OnboardingPage.svelte';
+    import ProfileSelectionPage from './pages/ProfileSelectionPage.svelte';
+    import { GetProfiles } from '@bindings/github.com/sriram15/progressor-todo-app/progressorapp';
     import { onMount } from "svelte";
+    import { profileStore } from '@/stores/profileStore';
 
     const { url = "" } = $props();
 
-    let hasProfiles = $state(false); // New state variable
-
-    const getProfiles = async () => {
+    onMount(async () => {
+        profileStore.setProfileState('loading');
         try {
             const profiles = await GetProfiles();
-            console.log("Fetched profiles:", profiles);
             if (profiles && profiles.length > 0) {
-                // Switch to the first profile to establish an active session
-                await SwitchProfile(profiles[0].id);
-                hasProfiles = true;
+                profileStore.setProfileState('needs-selection');
             } else {
-                hasProfiles = false;
+                profileStore.setProfileState('no-profiles');
             }
         } catch (error) {
             console.error("Error fetching profiles:", error);
-            hasProfiles = false; // Assume no profiles or error, show onboarding
+            profileStore.setProfileState('no-profiles'); // Assume no profiles or error
         }
-    };
-
-    onMount(() => {
-        getProfiles();
     });
 </script>
 
-{#if !hasProfiles}
+{#if $profileStore.state === 'loading'}
+    <div class="flex justify-center items-center h-screen">
+        <p>Loading...</p>
+    </div>
+{:else if $profileStore.state === 'no-profiles'}
     <OnboardingPage />
-{:else}
+{:else if $profileStore.state === 'needs-selection'}
+    <ProfileSelectionPage />
+{:else if $profileStore.state === 'profile-active'}
     <div id="app-shell" class="grid h-screen">
         <Router {url}>
             <header>

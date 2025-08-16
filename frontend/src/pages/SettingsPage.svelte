@@ -1,16 +1,19 @@
 <script lang="ts">
   import SkillManagement from "@/components/SkillManagement.svelte";
   import ProjectSkillAssociation from "@/components/ProjectSkillAssociation.svelte";
-  
+  import ProfileWizard from "@/components/ProfileWizard.svelte";
+  import { profileStore } from "@/stores/profileStore";
   import { GetAllSettings } from "@/services/service";
-  import type { SettingsItem } from "@bindings/github.com/sriram15/progressor-todo-app/internal/service/models";
 
-  type SettingView = "General" | "Skills" | "Projects";
+  type SettingView = "General" | "Skills" | "Projects" | "Profiles";
 
   let currentView: SettingView = $state("General");
-  let settings = $state<SettingsItem[]>([])
+  let settings = $state<{ display: string; value: string }[]>([]);
   let loading = $state(true);
   let error = $state<string | null>(null);
+  let showProfileWizard = $state(false);
+
+  const { activeProfile } = $derived(profileStore);
 
   $effect(() => {
     async function loadSettings() {
@@ -19,8 +22,7 @@
             error = null;
             try {
                 const settingsMap = await GetAllSettings();
-                settings = settingsMap
-                console.log("Settings loaded:", settings);
+                settings = Object.entries(settingsMap).map(([key, value]) => ({ display: key, value: value }));
             } catch (e: any) {
                 error = e.message;
             } finally {
@@ -33,6 +35,11 @@
 
   function setView(view: SettingView) {
     currentView = view;
+  }
+
+  function handleProfileCreation() {
+    showProfileWizard = false;
+    // Potentially refresh profile list if displaying a list
   }
 
   const activeClass = "bg-primary-500 text-on-primary";
@@ -61,6 +68,12 @@
         class="w-full text-left px-4 py-2 rounded-md font-semibold {currentView === 'Projects' ? activeClass : inactiveClass}"
       >
         Projects
+      </button>
+      <button
+        onclick={() => setView("Profiles")}
+        class="w-full text-left px-4 py-2 rounded-md font-semibold {currentView === 'Profiles' ? activeClass : inactiveClass}"
+      >
+        Profiles
       </button>
     </nav>
   </aside>
@@ -109,6 +122,25 @@
       <ProjectSkillAssociation />
     {/if}
 
-    
+    {#if currentView === "Profiles"}
+      <div>
+        <h3 class="h3 mb-4">Profile Management</h3>
+        <div class="card p-4 space-y-4">
+            <p><strong>Current Profile:</strong> {$profileStore.activeProfile?.name}</p>
+            <button class="btn variant-filled-primary" onclick={() => showProfileWizard = true}>
+                Create New Profile
+            </button>
+        </div>
+      </div>
+    {/if}
   </main>
 </div>
+
+{#if showProfileWizard}
+  <div class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+    <div class="relative">
+        <button class="btn btn-icon absolute top-2 right-2" onclick={() => showProfileWizard = false}>X</button>
+        <ProfileWizard onComplete={handleProfileCreation} />
+    </div>
+  </div>
+{/if}
