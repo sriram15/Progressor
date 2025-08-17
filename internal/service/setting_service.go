@@ -3,7 +3,6 @@ package service
 import (
 	"fmt"
 
-	"github.com/labstack/gommon/log"
 	"github.com/sriram15/progressor-todo-app/internal/connection"
 )
 
@@ -29,11 +28,9 @@ func NewSettingService(dbManager *connection.DBManager) *SettingService {
 	settings := []SettingsItem{
 		{Key: "dbType", Value: dbType, Display: "Database Type" },
 		{Key: "dbPath", Value: dbPath, Display: "Database Path"},
-		// map[string]string{"key": "shortcut_open", "value": "Ctrl + Shift + P", "display": "Shortcut - Open App"},
-		// map[string]string{"key": "active_card_timeout", "value": "1", "display": "Active Card Timeout (minutes)"},
+		{Key: "shortcut_open", Value: "Ctrl + Shift + P", Display: "Shortcut - Open App"},
+		{Key: "active_card_timeout", Value: "1", Display: "Active Card Timeout (minutes)"},
 	}
-
-	log.Printf("SettingService initialized with settings: %v", settings)
 
 	return &SettingService{dbManager: dbManager, settings: settings}
 }

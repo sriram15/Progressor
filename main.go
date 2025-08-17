@@ -3,10 +3,12 @@ package main
 import (
 	"embed"
 	"log"
+	"runtime"
 	"time"
 
 	"github.com/joho/godotenv"
 	"github.com/wailsapp/wails/v3/pkg/application"
+	"github.com/wailsapp/wails/v3/pkg/icons"
 	"github.com/wailsapp/wails/v3/pkg/services/notifications"
 )
 
@@ -40,16 +42,38 @@ func main() {
 
 	progressorApp.Startup(wailsApp)
 
-	wailsApp.Window.NewWithOptions(application.WebviewWindowOptions{
+	_ = wailsApp.Window.NewWithOptions(application.WebviewWindowOptions{
 		Title: "Progressor",
 		Mac: application.MacWindow{
 			InvisibleTitleBarHeight: 50,
 			Backdrop:                application.MacBackdropTranslucent,
 			TitleBar:                application.MacTitleBarHiddenInset,
 		},
+		Windows: application.WindowsWindow{
+			HiddenOnTaskbar: true,
+		},
 		BackgroundColour: application.NewRGB(27, 38, 54),
 		URL:              "/",
 	})
+
+	// System Tray Settings
+	systemTray := wailsApp.SystemTray.New()
+
+    // Support for template icons on macOS
+    if runtime.GOOS == "darwin" {
+        systemTray.SetTemplateIcon(icons.SystrayMacTemplate)
+    } else {
+        // Support for light/dark mode icons
+        systemTray.SetDarkModeIcon(icons.SystrayDark)
+        systemTray.SetIcon(icons.SystrayLight)
+    }
+
+    // Support for menu
+    myMenu := wailsApp.NewMenu()
+	myMenu.Add("Quit").OnClick(func(ctx *application.Context) {
+		wailsApp.Quit()
+	})
+    systemTray.SetMenu(myMenu)
 
 	go func() {
 		for {

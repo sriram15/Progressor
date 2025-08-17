@@ -7,7 +7,6 @@ toolchain go1.24.6
 require (
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
-	github.com/labstack/gommon v0.4.2
 	github.com/pressly/goose/v3 v3.24.3
 	github.com/tursodatabase/go-libsql v0.0.0-20250416102726-983f7e9acb0e
 	github.com/wailsapp/wails/v3 v3.0.0-alpha.21
@@ -52,8 +51,6 @@ require (
 	github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3 // indirect
 	github.com/sethvargo/go-retry v0.3.0 // indirect
 	github.com/skeema/knownhosts v1.3.1 // indirect
-	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/wailsapp/go-webview2 v1.0.21 // indirect
 	github.com/wailsapp/mimetype v1.4.1 // indirect
 	github.com/xanzy/ssh-agent v0.3.3 // indirect

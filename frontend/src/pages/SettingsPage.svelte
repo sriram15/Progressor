@@ -4,16 +4,15 @@
   import ProfileWizard from "@/components/ProfileWizard.svelte";
   import { profileStore } from "@/stores/profileStore";
   import { GetAllSettings } from "@/services/service";
+    import type { SettingsItem } from "@bindings/github.com/sriram15/progressor-todo-app/internal/service/models";
 
   type SettingView = "General" | "Skills" | "Projects" | "Profiles";
 
   let currentView: SettingView = $state("General");
-  let settings = $state<{ display: string; value: string }[]>([]);
+  let settings = $state<SettingsItem[]>([]);
   let loading = $state(true);
   let error = $state<string | null>(null);
   let showProfileWizard = $state(false);
-
-  const { activeProfile } = $derived(profileStore);
 
   $effect(() => {
     async function loadSettings() {
@@ -22,7 +21,7 @@
             error = null;
             try {
                 const settingsMap = await GetAllSettings();
-                settings = Object.entries(settingsMap).map(([key, value]) => ({ display: key, value: value }));
+                settings = settingsMap
             } catch (e: any) {
                 error = e.message;
             } finally {

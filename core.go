@@ -130,12 +130,6 @@ func (a *ProgressorApp) SwitchProfile(profileID string) error {
 		return fmt.Errorf("failed to create new app session for profile %s: %w", p.Name, err)
 	}
 
-	stats, err := newSession.progressService.GetStats()
-	if err != nil {
-		log.Printf("Failed to get stats for profile %s: %v", p.Name, err)
-	}
-
-	log.Printf("Successfully created new session for profile: %s", stats.MonthProgress)
 	a.sessionMutex.Lock()
 	a.currentSession = newSession
 	a.sessionMutex.Unlock()
