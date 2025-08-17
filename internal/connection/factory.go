@@ -2,7 +2,6 @@ package connection
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/sriram15/progressor-todo-app/internal/profile"
 )
@@ -34,7 +33,7 @@ func GetDBInfo() (string, string) {
 func NewManagerForProfile(p *profile.Profile) (*DBManager, error) {
 	var connector DBConnector
 
-	fmt.Println("Creating database manager for profile: %s", p.DBType)
+	fmt.Print("Creating database manager for profile: %s\n", p.DBType)
 
 	switch p.DBType {
 	case profile.DBTypeSQLite, "": // Default to SQLite
@@ -52,14 +51,10 @@ func NewManagerForProfile(p *profile.Profile) (*DBManager, error) {
 		return nil, fmt.Errorf("unsupported DB_TYPE: %s", p.DBType)
 	}
 
-	log.Println("Trying to Connect to database for profile:", p.Name)
-
 	connectedDB, actualDBType, err := connector.Connect()
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to database for profile %s: %w", p.Name, err)
 	}
-
-	fmt.Printf("Successfully established database connection (Type: %s) for profile %s.\n", actualDBType, p.Name)
 
 	if err := connector.Migrate(connectedDB, actualDBType); err != nil {
 		connectedDB.Close()

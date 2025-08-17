@@ -41,8 +41,8 @@ const userId = 1
 
 type ICardService interface {
 	GetAll(projectId uint, status CardStatus) ([]database.ListCardsRow, error)
-	GetCardById(projectId uint, id uint) (database.GetCardRow, error)
-	GetActiveTimeEntry(projectId uint, id uint) (database.TimeEntry, error)
+	GetCardById(projectId uint, id uint) (*database.GetCardRow, error)
+	GetActiveTimeEntry(projectId uint, id uint) (*database.TimeEntry, error)
 	DeleteCard(projectId uint, id uint) error
 	UpdateCard(projectId uint, id uint, updateCardParam UpdateCardParams) error
 	UpdateCardStatus(projectId uint, id uint, status CardStatus) error
@@ -79,9 +79,9 @@ func (c *CardService) GetAll(projectId uint, status CardStatus) ([]database.List
 	return queries.ListCards(c.ctx, database.ListCardsParams{Projectid: int64(projectId), Status: int64(status)})
 }
 
-func (c *CardService) GetCardById(projectId uint, id uint) (database.GetCardRow, error) {
+func (c *CardService) GetCardById(projectId uint, id uint) (*database.GetCardRow, error) {
 	if _, err := c.projectService.IsValidProject(projectId); err != nil {
-		return database.GetCardRow{}, err
+		return nil, err
 	}
 
 	queries := c.dbManager.Queries(c.ctx)
@@ -90,18 +90,24 @@ func (c *CardService) GetCardById(projectId uint, id uint) (database.GetCardRow,
 		Projectid: int64(projectId),
 	})
 	if err != nil {
-		return database.GetCardRow{}, ErrNotFound
+		return nil, ErrNotFound
 	}
-	return card, nil
+	return &card, nil
 }
 
-func (c *CardService) GetActiveTimeEntry(projectId uint, id uint) (database.TimeEntry, error) {
+func (c *CardService) GetActiveTimeEntry(projectId uint, id uint) (*database.TimeEntry, error) {
 	if _, err := c.projectService.IsValidProject(projectId); err != nil {
-		return database.TimeEntry{}, err
+		return nil, err
 	}
 
 	queries := c.dbManager.Queries(c.ctx)
-	return queries.GetActiveTimeEntry(c.ctx, int64(id))
+
+	res, err := queries.GetActiveTimeEntry(c.ctx, int64(id))
+	if err != nil {
+		return nil, err
+	}
+
+	return &res, nil
 }
 
 func (c *CardService) DeleteCard(projectId uint, id uint) error {
