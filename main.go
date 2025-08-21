@@ -27,10 +27,15 @@ func main() {
 	wailsApp := application.New(application.Options{
 		Name:        "progressor-todo-app",
 		Description: "Progressor Todo App",
-		Services: []application.Service{
-			application.NewService(progressorApp),
-			application.NewService(notifications.New()),
-		},
+		Services: func() []application.Service {
+				services := []application.Service{
+					application.NewService(progressorApp),
+				}
+				if runtime.GOOS != "darwin" {
+					services = append(services, application.NewService(notifications.New()))
+				}
+				return services
+			}(),
 		Assets: application.AssetOptions{
 			Handler: application.AssetFileServerFS(assets),
 		},
