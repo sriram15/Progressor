@@ -2,6 +2,7 @@ package service
 
 import (
 	"log"
+	"runtime"
 	"strconv"
 	"sync"
 	"time"
@@ -42,6 +43,36 @@ func NewFocusTimerService(cs ICardService, ss ISettingService, bus *events.Event
 	}
 }
 
+// validateNotification checks and requests notification authorization.
+func (s *FocusTimerService) validateNotification() bool {
+	if runtime.GOOS == "darwin" {
+		log.Println("Notifications are disabled on macOS.")
+		return false
+	}
+
+	notifier := notifications.New()
+	authorized, err := notifier.CheckNotificationAuthorization()
+	if err != nil {
+		log.Printf("Error checking notification authorization: %v", err)
+		return false
+	}
+
+	if !authorized {
+		log.Println("Notification authorization not granted. Requesting...")
+		authorized, err = notifier.RequestNotificationAuthorization()
+		if err != nil {
+			log.Printf("Error requesting notification authorization: %v", err)
+			return false
+		}
+		if !authorized {
+			log.Println("Notification authorization denied by user.")
+			return false
+		}
+		log.Println("Notification authorization granted.")
+	}
+	return true
+}
+
 // RegisterEventHandlers subscribes the service to necessary events.
 func (s *FocusTimerService) RegisterEventHandlers() {
 	s.eventBus.Subscribe(events.CardStartedTopic, s.handleCardStarted)
@@ -57,15 +88,19 @@ func (s *FocusTimerService) handleCardStarted(eventData interface{}) {
 	}
 	log.Printf("Received CardStartedEvent: %+v", event)
 
-	notification := notifications.New()
-	notificationOption := notifications.NotificationOptions{
-		ID: "focus-timer-started",
-		Title: "Focus Timer Started",
-	}
+	if s.validateNotification() {
+		notification := notifications.New()
+		notificationOption := notifications.NotificationOptions{
+			ID: "focus-timer-started",
+			Title: "Focus Timer Started",
+		}
 
-	err := notification.SendNotification(notificationOption);
-	if err != nil {
-		log.Println("Error sending notification:", err)
+		err := notification.SendNotification(notificationOption);
+		if err != nil {
+			log.Println("Error sending notification:", err)
+		}
+	} else {
+		log.Println("Notification not authorized, skipping send.")
 	}
 
 	s.startTimer(event.CardID)
@@ -108,40 +143,44 @@ func (s *FocusTimerService) startTimer(cardID int64) {
 		defer s.mu.Unlock()
 		log.Println("Focus timer completed for card:", s.activeCardID)
 
-		notificationCategoryId := "active-card-timer-complete"
-		category := notifications.NotificationCategory{
-			ID: notificationCategoryId,
-			Actions: []notifications.NotificationAction{
-				{
+		if s.validateNotification() {
+			notificationCategoryId := "active-card-timer-complete"
+			category := notifications.NotificationCategory{
+				ID: notificationCategoryId,
+				Actions: []notifications.NotificationAction{
+					{
             ID:    "CONTINUE",
             Title: "Continue",
         },{
-			ID:    "STOP",
-			Title: "Stop",
-		},
-			},
-		}
-
-		notification := notifications.New()
-		notification.RegisterNotificationCategory(category)
-
-		notification.OnNotificationResponse(func(result notifications.NotificationResult) {
-   	 		response := result.Response
-			if response.ActionIdentifier == "STOP" {
-				s.StopAndDeactivate()
+					ID:    "STOP",
+					Title: "Stop",
+				},
+				},
 			}
 
-		})
+			notification := notifications.New()
+			notification.RegisterNotificationCategory(category)
 
-		notificationOption := notifications.NotificationOptions{
-			ID:    "focus-timer-completed",
-			Title: "Focus Timer Completed",
-			CategoryID: notificationCategoryId,
-		}
+			notification.OnNotificationResponse(func(result notifications.NotificationResult) {
+   	 			response := result.Response
+				if response.ActionIdentifier == "STOP" {
+					s.StopAndDeactivate()
+				}
 
-		err := notification.SendNotificationWithActions(notificationOption)
-		if err != nil {
-			log.Println("Error sending notification:", err)
+			})
+
+			notificationOption := notifications.NotificationOptions{
+				ID:    "focus-timer-completed",
+				Title: "Focus Timer Completed",
+				CategoryID: notificationCategoryId,
+			}
+
+			err := notification.SendNotificationWithActions(notificationOption)
+			if err != nil {
+				log.Println("Error sending notification:", err)
+			}
+		} else {
+			log.Println("Notification not authorized, skipping send.")
 		}
 
 		s.app.Event.Emit("active_card_timer_complete", s.activeCardID)
