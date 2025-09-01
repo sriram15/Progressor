@@ -46,7 +46,12 @@ func NewManagerForProfile(p *profile.Profile) (*DBManager, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to get token for profile %s: %w", p.Name, err)
 		}
-		connector = NewTursoConnector(p.DBUrl, token)
+
+		encryptionKey, err := profile.GetToken(p.EncryptionKeyPath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get encryption key for profile %s: %w", p.Name, err)
+		}
+		connector = NewTursoConnector(p.DBUrl, token, encryptionKey)
 	default:
 		return nil, fmt.Errorf("unsupported DB_TYPE: %s", p.DBType)
 	}

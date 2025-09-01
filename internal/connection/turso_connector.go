@@ -14,22 +14,22 @@ import (
 
 // TursoConnector implements the DBConnector interface for Turso.
 type TursoConnector struct {
-	dbURL       string
-	authToken   string
-	loggableURL string
+	dbURL         string
+	authToken     string
+	loggableURL   string
+	encryptionKey string
 }
 
 // NewTursoConnector creates a new TursoConnector.
-func NewTursoConnector(dbURL, authToken string) DBConnector {
-	return &TursoConnector{dbURL: dbURL, authToken: authToken}
+func NewTursoConnector(dbURL, authToken, encryptionKey string) DBConnector {
+	return &TursoConnector{dbURL: dbURL, authToken: authToken, encryptionKey: encryptionKey}
 }
 
 // Connect establishes a connection to the Turso database in embedded replica mode only.
 func (tc *TursoConnector) Connect() (*sql.DB, string, error) {
-	encryptionKey := os.Getenv("TURSO_ENCRYPTION_KEY") // Keep this from env for now
 
-	if tc.dbURL == "" || tc.authToken == "" {
-		return nil, DBTypeTurso, fmt.Errorf("Turso DB URL and Auth Token must be provided")
+	if tc.dbURL == "" || tc.authToken == "" || tc.encryptionKey == "" {
+		return nil, DBTypeTurso, fmt.Errorf("Turso DB URL and Auth Token and EncryptionKey must be provided")
 	}
 
 	homeDir, err := os.UserHomeDir()
@@ -53,7 +53,7 @@ func (tc *TursoConnector) Connect() (*sql.DB, string, error) {
 
 	connector, err := libsql.NewEmbeddedReplicaConnector(dbPath, tc.dbURL,
 		libsql.WithAuthToken(tc.authToken),
-		libsql.WithEncryption(encryptionKey),
+		libsql.WithEncryption(tc.encryptionKey),
 	)
 	if err != nil {
 		return nil, DBTypeTurso, fmt.Errorf("failed to create Turso connector: %w", err)
