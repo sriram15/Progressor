@@ -36,4 +36,8 @@ type Profile struct {
 	// AuthTokenKey is the key used to look up the Turso auth token in the OS keychain.
 	// This is NOT the token itself. Used only when DBType is "turso".
 	AuthTokenKey string `json:"authTokenKey,omitempty"`
+
+	// Encryption key path is the key used to look up the Encryption key in the os keychain.
+	// this is not the encryption key itself. Used only when DBType is "turso".
+	EncryptionKeyPath string `json:"encryptionKeyPath,omitempty"`
 }

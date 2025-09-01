@@ -45,8 +45,8 @@ export function Cleanup(): Promise<void> & { cancel(): void } {
     return $resultPromise;
 }
 
-export function CreateProfile(p: profile$0.Profile, tursoToken: string): Promise<profile$0.Profile | null> & { cancel(): void } {
-    let $resultPromise = $Call.ByID(1797555708, p, tursoToken) as any;
+export function CreateProfile(p: profile$0.Profile, tursoToken: string, encryptionKeyPath: string): Promise<profile$0.Profile | null> & { cancel(): void } {
+    let $resultPromise = $Call.ByID(1797555708, p, tursoToken, encryptionKeyPath) as any;
     let $typingPromise = $resultPromise.then(($result: any) => {
         return $$createType1($result);
     }) as any;

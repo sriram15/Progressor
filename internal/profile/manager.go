@@ -49,7 +49,8 @@ func (m *ProfileManager) LoadConfig() (*Config, error) {
 
 	var config Config
 	if err := json.Unmarshal(bytes, &config); err != nil {
-		return nil, err	}
+		return nil, err
+	}
 
 	return &config, nil
 }
@@ -89,7 +90,7 @@ func (m *ProfileManager) GetProfile(profileID string) (*Profile, error) {
 }
 
 // CreateProfile creates a new profile, saves it to the config, and stores the Turso token if applicable.
-func (m *ProfileManager) CreateProfile(newProfile Profile, tursoToken string) (*Profile, error) {
+func (m *ProfileManager) CreateProfile(newProfile Profile, tursoToken, encryptionKeyPath string) (*Profile, error) {
 	config, err := m.LoadConfig()
 	if err != nil {
 		return nil, fmt.Errorf("failed to load profiles config: %w", err)
@@ -103,11 +104,21 @@ func (m *ProfileManager) CreateProfile(newProfile Profile, tursoToken string) (*
 		if tursoToken == "" {
 			return nil, errors.New("Turso token is required for Turso database type")
 		}
+
+		if encryptionKeyPath == "" {
+			return nil, errors.New("Encryption key path is required for Turso database type")
+		}
+
 		// Use the profile ID as the key for the token in the keyring
 		newProfile.AuthTokenKey = newProfile.ID
 		err := StoreToken(newProfile.AuthTokenKey, tursoToken)
 		if err != nil {
 			return nil, fmt.Errorf("failed to store Turso token: %w", err)
+		}
+
+		err = StoreToken(newProfile.EncryptionKeyPath, encryptionKeyPath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to store Encryption key path: %w", err)
 		}
 	}
 
@@ -169,9 +180,10 @@ func (m *ProfileManager) GetProfileDBPath(profileID string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("failed to get app directory: %w", err)
 	}
-	dbName := internal.DATABASE_NAME // Use the constant from connection package
+	dbName := internal.DATABASE_NAME                          // Use the constant from connection package
 	if p.Name != "" && strings.ToLower(p.Name) != "default" { // Assuming profile name is used for db name
 		dbName = fmt.Sprintf("progressor-%s.db", p.Name)
 	}
 	return filepath.Join(appDir, dbName), nil
 }
+

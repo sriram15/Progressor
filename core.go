@@ -101,11 +101,11 @@ func (a *ProgressorApp) GetProfiles() ([]profile.Profile, error) {
 	profiles, _ := a.profileManager.GetProfiles()
 	// pro, _ := a.profileManager.GetProfile(profiles[0].ID) // Ensure the first profile is loaded
 	// log.Printf("Loaded profiles: %s\n", pro.Name)
-	return profiles, nil;
+	return profiles, nil
 }
 
-func (a *ProgressorApp) CreateProfile(p profile.Profile, tursoToken string) (*profile.Profile, error) {
-	return a.profileManager.CreateProfile(p, tursoToken)
+func (a *ProgressorApp) CreateProfile(p profile.Profile, tursoToken, encryptionKeyPath string) (*profile.Profile, error) {
+	return a.profileManager.CreateProfile(p, tursoToken, encryptionKeyPath)
 }
 
 func (a *ProgressorApp) SwitchProfile(profileID string) error {
@@ -122,7 +122,6 @@ func (a *ProgressorApp) SwitchProfile(profileID string) error {
 	if err != nil {
 		return fmt.Errorf("failed to create db manager for profile %s: %w", p.Name, err)
 	}
-
 
 	newSession, err := NewAppSession(dbManager, a.eventBus, a.wailsApp)
 	if err != nil {

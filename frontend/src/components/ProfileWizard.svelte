@@ -1,35 +1,42 @@
 <script lang="ts">
-    import { CreateProfile, SwitchProfile } from '@bindings/github.com/sriram15/progressor-todo-app/progressorapp';
-    import { Profile, DBType } from '@bindings/github.com/sriram15/progressor-todo-app/internal/profile/models';
+    import {
+        CreateProfile,
+        SwitchProfile,
+    } from "@bindings/github.com/sriram15/progressor-todo-app/progressorapp";
+    import {
+        Profile,
+        DBType,
+    } from "@bindings/github.com/sriram15/progressor-todo-app/internal/profile/models";
 
     let { onComplete } = $props<{ onComplete: () => void }>();
 
     let currentStep = $state(1);
-    let profileName = $state('');
+    let profileName = $state("");
     let dbType = $state<DBType>(DBType.DBTypeSQLite);
-    let tursoUrl = $state('');
-    let tursoToken = $state('');
+    let tursoUrl = $state("");
+    let tursoToken = $state("");
+    let encryptionKey = $state("");
 
-    let errorMessage = $state('');
+    let errorMessage = $state("");
     let isLoading = $state(false);
 
     function nextStep() {
-        errorMessage = ''; // Clear previous errors
-        if (currentStep === 1 && profileName.trim() === '') {
-            errorMessage = 'Profile name cannot be empty.';
+        errorMessage = ""; // Clear previous errors
+        if (currentStep === 1 && profileName.trim() === "") {
+            errorMessage = "Profile name cannot be empty.";
             return;
         }
         currentStep++;
     }
 
     function prevStep() {
-        errorMessage = ''; // Clear previous errors
+        errorMessage = ""; // Clear previous errors
         currentStep--;
     }
 
     async function createAndSwitchProfile() {
         isLoading = true;
-        errorMessage = '';
+        errorMessage = "";
         try {
             const newProfile = new Profile({
                 name: profileName,
@@ -37,17 +44,22 @@
                 dbUrl: dbType === DBType.DBTypeTurso ? tursoUrl : undefined,
             });
 
-            const createdProfile = await CreateProfile(newProfile, tursoToken);
+            const createdProfile = await CreateProfile(
+                newProfile,
+                tursoToken,
+                encryptionKey,
+            );
 
             if (createdProfile && createdProfile.id) {
                 await SwitchProfile(createdProfile.id);
                 onComplete();
             } else {
-                errorMessage = 'Failed to create profile: No profile ID returned.';
+                errorMessage =
+                    "Failed to create profile: No profile ID returned.";
             }
         } catch (error: any) {
-            console.error('Error creating or switching profile:', error);
-            errorMessage = `Error: ${error.message || 'An unknown error occurred.'}`;
+            console.error("Error creating or switching profile:", error);
+            errorMessage = `Error: ${error.message || "An unknown error occurred."}`;
         } finally {
             isLoading = false;
         }
@@ -75,7 +87,9 @@
             />
         </div>
         <div class="flex justify-end mt-6">
-            <button class="btn variant-filled-primary" on:click={nextStep}>Next</button>
+            <button class="btn variant-filled-primary" on:click={nextStep}
+                >Next</button
+            >
         </div>
     {:else if currentStep === 2}
         <div class="form-group">
@@ -135,10 +149,27 @@
                     Generate a new token in your Turso dashboard.
                 </p>
             </div>
+            <div class="form-group mt-4">
+                <label for="encryptionKey" class="label">Encryption Key</label>
+                <input
+                    type="password"
+                    id="encryptionKey"
+                    class="input"
+                    bind:value={encryptionKey}
+                    placeholder="Create a new Encryption key to encrypt your data of replica stored in local"
+                />
+                <p class="text-sm text-surface-500 mt-1">
+                    NOTE: This key is used to encrypt your data for your local
+                    replica. People cannot open your local replica db without
+                    this key.
+                </p>
+            </div>
         {/if}
 
         <div class="flex justify-between mt-6">
-            <button class="btn variant-ghost-primary" on:click={prevStep}>Back</button>
+            <button class="btn variant-ghost-primary" on:click={prevStep}
+                >Back</button
+            >
             <button
                 class="btn variant-filled-primary"
                 on:click={createAndSwitchProfile}

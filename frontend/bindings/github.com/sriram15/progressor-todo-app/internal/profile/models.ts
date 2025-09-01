@@ -55,6 +55,12 @@ export class Profile {
      */
     "authTokenKey"?: string;
 
+    /**
+     * Encryption key path is the key used to look up the Encryption key in the os keychain.
+     * this is not the encryption key itself. Used only when DBType is "turso".
+     */
+    "encryptionKeyPath"?: string;
+
     /** Creates a new Profile instance. */
     constructor($$source: Partial<Profile> = {}) {
         if (!("id" in $$source)) {
